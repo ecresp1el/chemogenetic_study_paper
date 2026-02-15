@@ -91,3 +91,18 @@ Creates a single `1x4` figure with one panel per technology (`DREADD`, `PSAM`, `
 Outputs:
 - `output/plots/activation_vs_expression_1x4.png`
 - `output/plots/activation_vs_expression_mean_sem.csv`
+
+## Three Subgroups in 1x4 Layout
+
+```bash
+python scripts/plot_three_subgroups_1x4.py
+```
+
+Creates a single `1x4` figure (DREADD, PSAM, LMO7, EYFP) with:
+- Group I (Activation)
+- Group II (Expression only)
+- Group III (Effector only)
+
+Outputs:
+- `output/plots/three_subgroups_1x4.png`
+- `output/plots/three_subgroups_mean_sem.csv`
