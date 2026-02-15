@@ -336,7 +336,13 @@ class ShollDataProcessor:
         split_shared_control: bool = True,
         dpi: int = 180,
     ) -> list[Path]:
-        """Save one mean +/- SEM overlay plot per technology."""
+        """
+        Save one mean/SEM point plot per technology.
+
+        Mean values are plotted as dots and SEM is shown as vertical error bars.
+        A small x-offset is applied per group so overlapping traces (for example,
+        EYFP Activation vs Expression) remain visible.
+        """
         if summary_df is None:
             summary_df = self.summarize_mean_sem_by_technology(
                 split_shared_control=split_shared_control
@@ -347,6 +353,11 @@ class ShollDataProcessor:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         plot_paths: list[Path] = []
+        group_offsets = {
+            "Group I (Activation)": -1.0,
+            "Group II (Expression only)": 0.0,
+            "Group III (Effector only)": 1.0,
+        }
 
         for technology, group_map in self.TECHNOLOGY_CONDITIONS.items():
             tech_df = summary_df[summary_df["technology"] == technology].copy()
@@ -362,22 +373,33 @@ class ShollDataProcessor:
                 if line_df.empty:
                     continue
 
-                x = line_df["radius_um"]
+                x = line_df["radius_um"] + group_offsets.get(group_name, 0.0)
                 y = line_df["mean_intersections"]
                 sem = line_df["sem_intersections"]
                 color = self.GROUP_COLORS.get(group_name, "#4c4c4c")
                 label = f"{group_name}: {condition_name}"
 
-                ax.plot(x, y, color=color, linewidth=2, label=label)
-                ax.fill_between(x, y - sem, y + sem, color=color, alpha=0.18)
+                ax.errorbar(
+                    x,
+                    y,
+                    yerr=sem,
+                    fmt="o",
+                    color=color,
+                    ecolor=color,
+                    elinewidth=1.0,
+                    capsize=2.5,
+                    markersize=3.5,
+                    alpha=0.9,
+                    label=label,
+                )
 
-            ax.set_title(f"{technology}: Mean +/- SEM Sholl Intersections")
+            ax.set_title(f"{technology}: Mean (dots) +/- SEM (bars)")
             ax.set_xlabel("Radius from Soma (um)")
             ax.set_ylabel("Intersections")
             ax.grid(alpha=0.2)
             ax.legend(loc="upper right", fontsize=8, frameon=False)
 
-            file_name = f"{technology.lower()}_group_overlay_mean_sem.png"
+            file_name = f"{technology.lower()}_group_mean_sem_points.png"
             file_path = output_path / file_name
             fig.tight_layout()
             fig.savefig(file_path, dpi=dpi)

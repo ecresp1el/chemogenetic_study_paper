@@ -17,8 +17,8 @@ from chemogenetic_analysis import ShollDataProcessor
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate per-technology overlay plots (mean +/- SEM) for "
-            "Activation, Expression, and Effector groups."
+            "Generate per-technology mean/SEM plots with mean as dots and "
+            "SEM as error bars for Activation, Expression, and Effector groups."
         )
     )
     parser.add_argument(
@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--plots-dir",
         default=str(REPO_ROOT / "output" / "plots"),
-        help="Directory where overlay plots will be written.",
+        help="Directory where plots will be written.",
     )
     parser.add_argument(
         "--summary-output",
