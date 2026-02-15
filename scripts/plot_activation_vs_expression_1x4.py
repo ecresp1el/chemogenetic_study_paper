@@ -16,6 +16,10 @@ from chemogenetic_analysis import ShollDataProcessor
 
 TECH_ORDER = ["DREADD", "PSAM", "LMO7", "EYFP"]
 GROUPS = ["Group I (Activation)", "Group II (Expression only)"]
+GROUP_MARKERS = {
+    "Group I (Activation)": "o",
+    "Group II (Expression only)": "s",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,8 +72,8 @@ def main() -> None:
 
     fig, axes = plt.subplots(1, 4, figsize=(22, 5), sharey=True)
     group_offsets = {
-        "Group I (Activation)": -0.5,
-        "Group II (Expression only)": 0.5,
+        "Group I (Activation)": -1.0,
+        "Group II (Expression only)": 1.0,
     }
 
     for idx, technology in enumerate(TECH_ORDER):
@@ -97,7 +101,7 @@ def main() -> None:
                 x,
                 y,
                 yerr=sem,
-                fmt="o",
+                fmt=GROUP_MARKERS.get(group_name, "o"),
                 color=color,
                 ecolor=color,
                 elinewidth=1.0,
@@ -107,6 +111,18 @@ def main() -> None:
             )
 
         ax.set_title(technology)
+        activation_cond = tech_map.get("Group I (Activation)", "NA")
+        expression_cond = tech_map.get("Group II (Expression only)", "NA")
+        ax.text(
+            0.02,
+            0.98,
+            f"A: {activation_cond}\nE: {expression_cond}",
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=8,
+            bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none"},
+        )
         ax.grid(alpha=0.2)
         ax.set_xlabel("Radius from Soma (um)")
         if idx == 0:
@@ -116,7 +132,7 @@ def main() -> None:
         Line2D(
             [0],
             [0],
-            marker="o",
+            marker=GROUP_MARKERS.get(group, "o"),
             color=processor.GROUP_COLORS.get(group, "#4c4c4c"),
             linestyle="None",
             markersize=6,
