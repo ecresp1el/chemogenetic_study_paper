@@ -106,3 +106,25 @@ Creates a single `1x4` figure (DREADD, PSAM, LMO7, EYFP) with:
 Outputs:
 - `output/plots/three_subgroups_1x4.png`
 - `output/plots/three_subgroups_mean_sem.csv`
+
+## AUC Mixed-Model Statistics
+
+```bash
+python scripts/run_auc_stats.py
+```
+
+Primary analysis:
+- `DREADD_Vehicle` vs `DREADD_CNO`
+- `LMO7_Vehicle` vs `LMO7_hCTZ`
+- `PSAM_Vehicle` vs `PSAM_uPSEM`
+- Model: `auc ~ stimulation_binary + (1 | experiment)`
+
+Secondary analysis:
+- Across technologies: `auc ~ C(actuator) * stimulation_binary + (1 | experiment)`
+
+Outputs:
+- `output/stats/auc_per_neuron.csv`
+- `output/stats/primary_within_actuator_mixedlm.csv`
+- `output/stats/secondary_across_technologies_fixed_effects.csv`
+- `output/stats/secondary_key_tests.csv`
+- `output/stats/analysis_notes.md`
