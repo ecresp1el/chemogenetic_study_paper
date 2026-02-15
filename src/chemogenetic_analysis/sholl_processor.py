@@ -36,6 +36,33 @@ class ShollDataProcessor:
         "None_hCTZ": "Group III (Effector only)",
         "None_Vehicle": "Group III (Effector only)",
     }
+    TECHNOLOGY_CONDITIONS = {
+        "DREADD": {
+            "Group I (Activation)": "DREADD_CNO",
+            "Group II (Expression only)": "DREADD_Vehicle",
+            "Group III (Effector only)": "None_CNO",
+        },
+        "PSAM": {
+            "Group I (Activation)": "PSAM_uPSEM",
+            "Group II (Expression only)": "PSAM_Vehicle",
+            "Group III (Effector only)": "None_uPSEM",
+        },
+        "LMO7": {
+            "Group I (Activation)": "LMO7_hCTZ",
+            "Group II (Expression only)": "LMO7_Vehicle",
+            "Group III (Effector only)": "None_hCTZ",
+        },
+        "EYFP": {
+            "Group I (Activation)": "EYFP_Vehicle",
+            "Group II (Expression only)": "EYFP_Vehicle",
+            "Group III (Effector only)": "None_Vehicle",
+        },
+    }
+    GROUP_COLORS = {
+        "Group I (Activation)": "#d1495b",
+        "Group II (Expression only)": "#2e86ab",
+        "Group III (Effector only)": "#3caea3",
+    }
 
     def __init__(self, csv_path: str | Path):
         self.csv_path = Path(csv_path)
@@ -223,6 +250,141 @@ class ShollDataProcessor:
         )
 
         return summary_df
+
+    def summarize_mean_sem_by_technology(
+        self,
+        recoded_df: pd.DataFrame | None = None,
+        split_shared_control: bool = True,
+    ) -> pd.DataFrame:
+        """Summarize mean and SEM intersections by technology, group, and radius."""
+        if recoded_df is None:
+            recoded_df = self.recode_conditions(split_shared_control=split_shared_control)
+
+        summary_frames: list[pd.DataFrame] = []
+        for technology, group_map in self.TECHNOLOGY_CONDITIONS.items():
+            for group_name, condition_name in group_map.items():
+                subset = recoded_df[
+                    (recoded_df["analysis_group"] == group_name)
+                    & (recoded_df["condition"] == condition_name)
+                ].copy()
+                if subset.empty:
+                    continue
+
+                stats = (
+                    subset.groupby("radius_um", as_index=False)["intersections"]
+                    .agg(
+                        mean_intersections="mean",
+                        sem_intersections="sem",
+                        n_cells="count",
+                    )
+                    .sort_values("radius_um")
+                )
+                stats["sem_intersections"] = stats["sem_intersections"].fillna(0.0)
+                stats["technology"] = technology
+                stats["analysis_group"] = group_name
+                stats["condition"] = condition_name
+                summary_frames.append(stats)
+
+        if not summary_frames:
+            return pd.DataFrame(
+                columns=[
+                    "radius_um",
+                    "mean_intersections",
+                    "sem_intersections",
+                    "n_cells",
+                    "technology",
+                    "analysis_group",
+                    "condition",
+                ]
+            )
+
+        summary_df = pd.concat(summary_frames, ignore_index=True)
+        summary_df = summary_df[
+            [
+                "technology",
+                "analysis_group",
+                "condition",
+                "radius_um",
+                "mean_intersections",
+                "sem_intersections",
+                "n_cells",
+            ]
+        ]
+        summary_df = summary_df.sort_values(
+            ["technology", "analysis_group", "radius_um"]
+        ).reset_index(drop=True)
+        return summary_df
+
+    def write_mean_sem_summary(
+        self,
+        output_path: str | Path,
+        split_shared_control: bool = True,
+    ) -> Path:
+        """Write mean/SEM summary by technology and group to CSV."""
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        summary_df = self.summarize_mean_sem_by_technology(
+            split_shared_control=split_shared_control
+        )
+        summary_df.to_csv(output, index=False)
+        return output
+
+    def plot_technology_overlays(
+        self,
+        output_dir: str | Path,
+        summary_df: pd.DataFrame | None = None,
+        split_shared_control: bool = True,
+        dpi: int = 180,
+    ) -> list[Path]:
+        """Save one mean +/- SEM overlay plot per technology."""
+        if summary_df is None:
+            summary_df = self.summarize_mean_sem_by_technology(
+                split_shared_control=split_shared_control
+            )
+
+        import matplotlib.pyplot as plt
+
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        plot_paths: list[Path] = []
+
+        for technology, group_map in self.TECHNOLOGY_CONDITIONS.items():
+            tech_df = summary_df[summary_df["technology"] == technology].copy()
+            if tech_df.empty:
+                continue
+
+            fig, ax = plt.subplots(figsize=(9, 5.5))
+            for group_name, condition_name in group_map.items():
+                line_df = tech_df[
+                    (tech_df["analysis_group"] == group_name)
+                    & (tech_df["condition"] == condition_name)
+                ].sort_values("radius_um")
+                if line_df.empty:
+                    continue
+
+                x = line_df["radius_um"]
+                y = line_df["mean_intersections"]
+                sem = line_df["sem_intersections"]
+                color = self.GROUP_COLORS.get(group_name, "#4c4c4c")
+                label = f"{group_name}: {condition_name}"
+
+                ax.plot(x, y, color=color, linewidth=2, label=label)
+                ax.fill_between(x, y - sem, y + sem, color=color, alpha=0.18)
+
+            ax.set_title(f"{technology}: Mean +/- SEM Sholl Intersections")
+            ax.set_xlabel("Radius from Soma (um)")
+            ax.set_ylabel("Intersections")
+            ax.grid(alpha=0.2)
+            ax.legend(loc="upper right", fontsize=8, frameon=False)
+
+            file_name = f"{technology.lower()}_group_overlay_mean_sem.png"
+            file_path = output_path / file_name
+            fig.tight_layout()
+            fig.savefig(file_path, dpi=dpi)
+            plt.close(fig)
+            plot_paths.append(file_path)
+
+        return plot_paths
 
     def write_cell_count_summary(
         self,

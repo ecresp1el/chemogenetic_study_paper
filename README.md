@@ -34,3 +34,21 @@ Default output:
 Current recode assumptions:
 - `CONTROL` and `CONTROL/MEDIA` -> `EYFP_Vehicle`
 - `MEDIA` -> `None_Vehicle`
+
+## Plot Mean +/- SEM Overlays By Technology
+
+```bash
+python scripts/plot_technology_overlays.py
+```
+
+This writes 4 overlay plots (DREADD, PSAM, LMO7, EYFP), each containing:
+- Group I (Activation)
+- Group II (Expression only)
+- Group III (Effector only)
+
+Outputs:
+- `output/plots/mean_sem_by_technology_group.csv`
+- `output/plots/dreadd_group_overlay_mean_sem.png`
+- `output/plots/psam_group_overlay_mean_sem.png`
+- `output/plots/lmo7_group_overlay_mean_sem.png`
+- `output/plots/eyfp_group_overlay_mean_sem.png`
