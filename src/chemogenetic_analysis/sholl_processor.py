@@ -10,6 +10,32 @@ class ShollDataProcessor:
     """Load and tidy wide-format Sholl analysis CSV files."""
 
     DISTANCE_COLUMN = "Distance from Soma (µm)"
+    DEFAULT_CONDITION_MAP = {
+        "DREADD/CNO": "DREADD_CNO",
+        "PSAM/uPSEM": "PSAM_uPSEM",
+        "LMO7/hCTZ": "LMO7_hCTZ",
+        "DREADD": "DREADD_Vehicle",
+        "PSAM": "PSAM_Vehicle",
+        "LMO7": "LMO7_Vehicle",
+        "CONTROL": "EYFP_Vehicle",
+        "CONTROL/MEDIA": "EYFP_Vehicle",
+        "CNO": "None_CNO",
+        "uPSEM": "None_uPSEM",
+        "hCTZ": "None_hCTZ",
+        "MEDIA": "None_Vehicle",
+    }
+    GROUP_BY_CONDITION = {
+        "DREADD_CNO": "Group I (Activation)",
+        "PSAM_uPSEM": "Group I (Activation)",
+        "LMO7_hCTZ": "Group I (Activation)",
+        "DREADD_Vehicle": "Group II (Expression only)",
+        "PSAM_Vehicle": "Group II (Expression only)",
+        "LMO7_Vehicle": "Group II (Expression only)",
+        "None_CNO": "Group III (Effector only)",
+        "None_uPSEM": "Group III (Effector only)",
+        "None_hCTZ": "Group III (Effector only)",
+        "None_Vehicle": "Group III (Effector only)",
+    }
 
     def __init__(self, csv_path: str | Path):
         self.csv_path = Path(csv_path)
@@ -89,6 +115,78 @@ class ShollDataProcessor:
         output.parent.mkdir(parents=True, exist_ok=True)
         tidy_df = self.tidy(drop_missing_intersections=drop_missing_intersections)
         tidy_df.to_csv(output, index=False)
+        return output
+
+    def recode_conditions(
+        self,
+        tidy_df: pd.DataFrame | None = None,
+        split_shared_control: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Recode raw condition names into study condition names and analysis groups.
+
+        Assumptions used for current dataset:
+        - CONTROL and CONTROL/MEDIA both map to EYFP_Vehicle
+        - MEDIA maps to None_Vehicle
+
+        If split_shared_control=True, EYFP_Vehicle rows are duplicated into:
+        - Group I (Activation)
+        - Group II (Expression only)
+        """
+        if tidy_df is None:
+            tidy_df = self.tidy()
+
+        recoded_df = tidy_df.copy()
+        recoded_df["source_condition"] = recoded_df["condition"]
+        recoded_df["condition"] = (
+            recoded_df["condition"]
+            .map(self.DEFAULT_CONDITION_MAP)
+            .fillna(recoded_df["condition"])
+        )
+        recoded_df["analysis_group"] = recoded_df["condition"].map(self.GROUP_BY_CONDITION)
+        recoded_df.loc[
+            recoded_df["condition"] == "EYFP_Vehicle", "analysis_group"
+        ] = "Group I/II (Shared Control)"
+
+        if split_shared_control:
+            shared_df = recoded_df.loc[recoded_df["condition"] == "EYFP_Vehicle"].copy()
+            non_shared_df = recoded_df.loc[recoded_df["condition"] != "EYFP_Vehicle"]
+            shared_g1 = shared_df.copy()
+            shared_g1["analysis_group"] = "Group I (Activation)"
+            shared_g2 = shared_df.copy()
+            shared_g2["analysis_group"] = "Group II (Expression only)"
+            recoded_df = pd.concat([non_shared_df, shared_g1, shared_g2], ignore_index=True)
+
+        recoded_df = recoded_df[
+            [
+                "radius_um",
+                "analysis_group",
+                "condition",
+                "replicate",
+                "sample_id",
+                "intersections",
+                "source_condition",
+            ]
+        ]
+        recoded_df = recoded_df.sort_values(
+            ["analysis_group", "condition", "replicate", "radius_um"]
+        ).reset_index(drop=True)
+        return recoded_df
+
+    def write_recoded_csv(
+        self,
+        output_path: str | Path,
+        drop_missing_intersections: bool = True,
+        split_shared_control: bool = True,
+    ) -> Path:
+        """Write tidy data with recoded condition/group labels."""
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        tidy_df = self.tidy(drop_missing_intersections=drop_missing_intersections)
+        recoded_df = self.recode_conditions(
+            tidy_df=tidy_df, split_shared_control=split_shared_control
+        )
+        recoded_df.to_csv(output, index=False)
         return output
 
     @staticmethod

@@ -20,3 +20,16 @@ Default input:
 
 Default output:
 - `output/tidy_sholl_analysis.csv`
+
+## Recode to Analysis Groups
+
+```bash
+python scripts/recode_sholl_conditions.py
+```
+
+Default output:
+- `output/tidy_sholl_analysis_grouped.csv`
+
+Current recode assumptions:
+- `CONTROL` and `CONTROL/MEDIA` -> `EYFP_Vehicle`
+- `MEDIA` -> `None_Vehicle`
