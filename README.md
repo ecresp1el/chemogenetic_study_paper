@@ -32,7 +32,8 @@ Default output:
 - `output/cell_counts_by_group_condition.csv` (total cells by group and condition)
 
 Current recode assumptions:
-- `CONTROL` and `CONTROL/MEDIA` -> `EYFP_Vehicle`
+- `CONTROL` -> `EYFP_Control`
+- `CONTROL/MEDIA` -> `EYFP_Control_Media`
 - `MEDIA` -> `None_Vehicle`
 
 ## Plot Mean +/- SEM By Technology

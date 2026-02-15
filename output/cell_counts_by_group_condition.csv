@@ -1,10 +1,10 @@
 analysis_group,condition,total_cells
 Group I (Activation),DREADD_CNO,12
-Group I (Activation),EYFP_Vehicle,23
+Group I (Activation),EYFP_Control_Media,11
 Group I (Activation),LMO7_hCTZ,9
 Group I (Activation),PSAM_uPSEM,12
 Group II (Expression only),DREADD_Vehicle,9
-Group II (Expression only),EYFP_Vehicle,23
+Group II (Expression only),EYFP_Control,12
 Group II (Expression only),LMO7_Vehicle,11
 Group II (Expression only),PSAM_Vehicle,10
 Group III (Effector only),None_CNO,11

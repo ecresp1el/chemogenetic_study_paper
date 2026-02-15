@@ -17,8 +17,8 @@ class ShollDataProcessor:
         "DREADD": "DREADD_Vehicle",
         "PSAM": "PSAM_Vehicle",
         "LMO7": "LMO7_Vehicle",
-        "CONTROL": "EYFP_Vehicle",
-        "CONTROL/MEDIA": "EYFP_Vehicle",
+        "CONTROL": "EYFP_Control",
+        "CONTROL/MEDIA": "EYFP_Control_Media",
         "CNO": "None_CNO",
         "uPSEM": "None_uPSEM",
         "hCTZ": "None_hCTZ",
@@ -31,6 +31,8 @@ class ShollDataProcessor:
         "DREADD_Vehicle": "Group II (Expression only)",
         "PSAM_Vehicle": "Group II (Expression only)",
         "LMO7_Vehicle": "Group II (Expression only)",
+        "EYFP_Control": "Group II (Expression only)",
+        "EYFP_Control_Media": "Group I (Activation)",
         "None_CNO": "Group III (Effector only)",
         "None_uPSEM": "Group III (Effector only)",
         "None_hCTZ": "Group III (Effector only)",
@@ -53,8 +55,8 @@ class ShollDataProcessor:
             "Group III (Effector only)": "None_hCTZ",
         },
         "EYFP": {
-            "Group I (Activation)": "EYFP_Vehicle",
-            "Group II (Expression only)": "EYFP_Vehicle",
+            "Group I (Activation)": "EYFP_Control_Media",
+            "Group II (Expression only)": "EYFP_Control",
             "Group III (Effector only)": "None_Vehicle",
         },
     }
@@ -158,12 +160,11 @@ class ShollDataProcessor:
         Recode raw condition names into study condition names and analysis groups.
 
         Assumptions used for current dataset:
-        - CONTROL and CONTROL/MEDIA both map to EYFP_Vehicle
+        - CONTROL maps to EYFP_Control
+        - CONTROL/MEDIA maps to EYFP_Control_Media
         - MEDIA maps to None_Vehicle
 
-        If split_shared_control=True, EYFP_Vehicle rows are duplicated into:
-        - Group I (Activation)
-        - Group II (Expression only)
+        split_shared_control only applies to legacy EYFP_Vehicle mappings.
         """
         if tidy_df is None:
             tidy_df = self.tidy()
@@ -176,11 +177,9 @@ class ShollDataProcessor:
             .fillna(recoded_df["condition"])
         )
         recoded_df["analysis_group"] = recoded_df["condition"].map(self.GROUP_BY_CONDITION)
-        recoded_df.loc[
-            recoded_df["condition"] == "EYFP_Vehicle", "analysis_group"
-        ] = "Group I/II (Shared Control)"
 
         if split_shared_control:
+            # Backward compatibility for older mappings that may still use EYFP_Vehicle.
             shared_df = recoded_df.loc[recoded_df["condition"] == "EYFP_Vehicle"].copy()
             non_shared_df = recoded_df.loc[recoded_df["condition"] != "EYFP_Vehicle"]
             shared_g1 = shared_df.copy()

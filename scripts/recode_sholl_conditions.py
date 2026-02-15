@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-split-shared-control",
         action="store_true",
-        help="Keep EYFP_Vehicle as a single shared-control group label.",
+        help="Legacy option for old EYFP_Vehicle mapping (no effect in current mapping).",
     )
     return parser.parse_args()
 
