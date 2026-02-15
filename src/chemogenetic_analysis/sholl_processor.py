@@ -63,6 +63,11 @@ class ShollDataProcessor:
         "Group II (Expression only)": "#2e86ab",
         "Group III (Effector only)": "#3caea3",
     }
+    GROUP_ORDER = [
+        "Group I (Activation)",
+        "Group II (Expression only)",
+        "Group III (Effector only)",
+    ]
 
     def __init__(self, csv_path: str | Path):
         self.csv_path = Path(csv_path)
@@ -229,17 +234,7 @@ class ShollDataProcessor:
         if recoded_df is None:
             recoded_df = self.recode_conditions(split_shared_control=split_shared_control)
 
-        counts_df = recoded_df.copy()
-        sample_series = counts_df["sample_id"].where(
-            counts_df["sample_id"].notna(), "NA"
-        ).astype(str)
-        counts_df["cell_id"] = (
-            counts_df["source_condition"].astype(str)
-            + "__r"
-            + counts_df["replicate"].astype(int).astype(str)
-            + "__s"
-            + sample_series
-        )
+        counts_df = self._add_cell_id(recoded_df)
 
         summary_df = (
             counts_df.groupby(["analysis_group", "condition"], as_index=False)["cell_id"]
@@ -250,6 +245,168 @@ class ShollDataProcessor:
         )
 
         return summary_df
+
+    def summarize_radius_coverage(
+        self,
+        recoded_df: pd.DataFrame | None = None,
+        split_shared_control: bool = True,
+        majority_threshold: float = 0.5,
+    ) -> pd.DataFrame:
+        """
+        Summarize radius-level data availability and zero-intersection prevalence.
+
+        Output includes:
+        - pct_cells_observed: fraction of cells with non-missing intersections at radius
+        - pct_zero_of_observed: fraction of observed cells with zero intersections
+        - majority_observed: pct_cells_observed >= majority_threshold
+        - majority_zero_observed: pct_zero_of_observed >= majority_threshold
+        """
+        if recoded_df is None:
+            tidy_df = self.tidy(drop_missing_intersections=False)
+            recoded_df = self.recode_conditions(
+                tidy_df=tidy_df, split_shared_control=split_shared_control
+            )
+
+        coverage_df = self._add_cell_id(recoded_df)
+        total_cells_df = (
+            coverage_df.groupby(["analysis_group", "condition"], as_index=False)["cell_id"]
+            .nunique()
+            .rename(columns={"cell_id": "total_cells"})
+        )
+
+        observed_df = coverage_df.loc[coverage_df["intersections"].notna()].copy()
+        observed_counts = (
+            observed_df.groupby(["analysis_group", "condition", "radius_um"], as_index=False)[
+                "cell_id"
+            ]
+            .nunique()
+            .rename(columns={"cell_id": "n_cells_observed"})
+        )
+
+        zero_counts = (
+            observed_df.loc[observed_df["intersections"] == 0]
+            .groupby(["analysis_group", "condition", "radius_um"], as_index=False)["cell_id"]
+            .nunique()
+            .rename(columns={"cell_id": "n_cells_zero"})
+        )
+
+        intersection_stats = (
+            observed_df.groupby(["analysis_group", "condition", "radius_um"], as_index=False)[
+                "intersections"
+            ]
+            .agg(mean_intersections="mean", sem_intersections="sem")
+        )
+        intersection_stats["sem_intersections"] = intersection_stats[
+            "sem_intersections"
+        ].fillna(0.0)
+
+        summary_df = observed_counts.merge(
+            total_cells_df, on=["analysis_group", "condition"], how="left"
+        )
+        summary_df = summary_df.merge(
+            zero_counts,
+            on=["analysis_group", "condition", "radius_um"],
+            how="left",
+        )
+        summary_df = summary_df.merge(
+            intersection_stats,
+            on=["analysis_group", "condition", "radius_um"],
+            how="left",
+        )
+        summary_df["n_cells_zero"] = summary_df["n_cells_zero"].fillna(0).astype(int)
+        summary_df["pct_cells_observed"] = (
+            summary_df["n_cells_observed"] / summary_df["total_cells"]
+        )
+        summary_df["pct_zero_of_observed"] = summary_df["n_cells_zero"] / summary_df[
+            "n_cells_observed"
+        ]
+        summary_df["majority_observed"] = (
+            summary_df["pct_cells_observed"] >= majority_threshold
+        )
+        summary_df["majority_zero_observed"] = (
+            summary_df["pct_zero_of_observed"] >= majority_threshold
+        )
+        summary_df["technology"] = summary_df["condition"].map(
+            self._build_condition_to_technology_map()
+        )
+        summary_df = summary_df[
+            [
+                "technology",
+                "analysis_group",
+                "condition",
+                "radius_um",
+                "total_cells",
+                "n_cells_observed",
+                "n_cells_zero",
+                "pct_cells_observed",
+                "pct_zero_of_observed",
+                "mean_intersections",
+                "sem_intersections",
+                "majority_observed",
+                "majority_zero_observed",
+            ]
+        ]
+        summary_df = summary_df.sort_values(
+            ["technology", "analysis_group", "radius_um"]
+        ).reset_index(drop=True)
+        return summary_df
+
+    def write_radius_coverage_summary(
+        self,
+        output_path: str | Path,
+        split_shared_control: bool = True,
+        majority_threshold: float = 0.5,
+    ) -> Path:
+        """Write radius coverage/zero summary to CSV."""
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        summary_df = self.summarize_radius_coverage(
+            split_shared_control=split_shared_control,
+            majority_threshold=majority_threshold,
+        )
+        summary_df.to_csv(output, index=False)
+        return output
+
+    def summarize_majority_windows(
+        self,
+        coverage_df: pd.DataFrame | None = None,
+        majority_threshold: float = 0.5,
+        radius_min: float = 0.0,
+    ) -> pd.DataFrame:
+        """
+        Summarize radii where all three groups are majority-observed per technology.
+        """
+        if coverage_df is None:
+            coverage_df = self.summarize_radius_coverage(
+                majority_threshold=majority_threshold
+            )
+
+        if radius_min is not None:
+            coverage_df = coverage_df.loc[coverage_df["radius_um"] >= radius_min].copy()
+
+        window_rows: list[dict[str, float | str | int | bool]] = []
+        for technology in sorted(coverage_df["technology"].dropna().unique()):
+            tech_df = coverage_df.loc[coverage_df["technology"] == technology].copy()
+            radius_values = sorted(tech_df["radius_um"].unique())
+            for radius in radius_values:
+                r_df = tech_df.loc[tech_df["radius_um"] == radius]
+                group_ok = (
+                    r_df.groupby("analysis_group")["pct_cells_observed"].max()
+                    >= majority_threshold
+                )
+                all_groups_majority = set(self.GROUP_ORDER).issubset(set(group_ok.index)) and bool(
+                    group_ok.reindex(self.GROUP_ORDER).fillna(False).all()
+                )
+                window_rows.append(
+                    {
+                        "technology": technology,
+                        "radius_um": radius,
+                        "all_groups_majority_observed": all_groups_majority,
+                    }
+                )
+
+        windows_df = pd.DataFrame(window_rows)
+        return windows_df
 
     def summarize_mean_sem_by_technology(
         self,
@@ -407,6 +564,104 @@ class ShollDataProcessor:
             plot_paths.append(file_path)
 
         return plot_paths
+
+    def plot_radius_coverage_by_technology(
+        self,
+        output_dir: str | Path,
+        coverage_df: pd.DataFrame | None = None,
+        majority_threshold: float = 0.5,
+        highlight_radius: float = 200.0,
+        dpi: int = 180,
+    ) -> list[Path]:
+        """
+        Save one radius-coverage diagnostic plot per technology.
+
+        Top panel: % cells observed per radius.
+        Bottom panel: % observed cells with zero intersections per radius.
+        """
+        if coverage_df is None:
+            coverage_df = self.summarize_radius_coverage(
+                majority_threshold=majority_threshold
+            )
+
+        import matplotlib.pyplot as plt
+
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        plot_paths: list[Path] = []
+
+        for technology in sorted(coverage_df["technology"].dropna().unique()):
+            tech_df = coverage_df.loc[coverage_df["technology"] == technology].copy()
+            if tech_df.empty:
+                continue
+
+            fig, axes = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+            ax_cov, ax_zero = axes
+
+            for group_name in self.GROUP_ORDER:
+                group_df = tech_df.loc[tech_df["analysis_group"] == group_name].sort_values(
+                    "radius_um"
+                )
+                if group_df.empty:
+                    continue
+                color = self.GROUP_COLORS.get(group_name, "#4c4c4c")
+                ax_cov.plot(
+                    group_df["radius_um"],
+                    group_df["pct_cells_observed"] * 100.0,
+                    color=color,
+                    linewidth=1.9,
+                    label=group_name,
+                )
+                ax_zero.plot(
+                    group_df["radius_um"],
+                    group_df["pct_zero_of_observed"] * 100.0,
+                    color=color,
+                    linewidth=1.9,
+                    label=group_name,
+                )
+
+            ax_cov.axhline(majority_threshold * 100.0, color="#555555", linestyle="--", linewidth=1)
+            ax_zero.axhline(majority_threshold * 100.0, color="#555555", linestyle="--", linewidth=1)
+            ax_cov.axvline(highlight_radius, color="#888888", linestyle=":", linewidth=1)
+            ax_zero.axvline(highlight_radius, color="#888888", linestyle=":", linewidth=1)
+
+            ax_cov.set_ylabel("% Cells Observed")
+            ax_zero.set_ylabel("% Zero of Observed")
+            ax_zero.set_xlabel("Radius from Soma (um)")
+            ax_cov.set_title(f"{technology}: Radius Coverage and Zero-Intersection Trend")
+            ax_cov.grid(alpha=0.2)
+            ax_zero.grid(alpha=0.2)
+            ax_cov.legend(loc="upper right", frameon=False, fontsize=8)
+
+            file_path = output_path / f"{technology.lower()}_radius_coverage_zero.png"
+            fig.tight_layout()
+            fig.savefig(file_path, dpi=dpi)
+            plt.close(fig)
+            plot_paths.append(file_path)
+
+        return plot_paths
+
+    @staticmethod
+    def _add_cell_id(df: pd.DataFrame) -> pd.DataFrame:
+        with_cells = df.copy()
+        sample_series = with_cells["sample_id"].where(
+            with_cells["sample_id"].notna(), "NA"
+        ).astype(str)
+        with_cells["cell_id"] = (
+            with_cells["source_condition"].astype(str)
+            + "__r"
+            + with_cells["replicate"].astype(int).astype(str)
+            + "__s"
+            + sample_series
+        )
+        return with_cells
+
+    def _build_condition_to_technology_map(self) -> dict[str, str]:
+        condition_to_tech: dict[str, str] = {}
+        for technology, group_map in self.TECHNOLOGY_CONDITIONS.items():
+            for condition_name in group_map.values():
+                condition_to_tech[condition_name] = technology
+        return condition_to_tech
 
     def write_cell_count_summary(
         self,

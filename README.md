@@ -57,3 +57,22 @@ Outputs:
 - `output/plots/psam_group_mean_sem_points.png`
 - `output/plots/lmo7_group_mean_sem_points.png`
 - `output/plots/eyfp_group_mean_sem_points.png`
+
+## Radius Coverage and Zero Trend Diagnostics
+
+```bash
+python scripts/plot_radius_coverage.py
+```
+
+This writes radius-focused diagnostics to show:
+- where data are still shared by a majority of cells (default threshold 50%)
+- where intersections trend toward zero across radius
+- a visual guide at radius `200 um`
+
+Outputs:
+- `output/plots/radius_coverage_summary.csv`
+- `output/plots/radius_majority_windows.csv`
+- `output/plots/dreadd_radius_coverage_zero.png`
+- `output/plots/psam_radius_coverage_zero.png`
+- `output/plots/lmo7_radius_coverage_zero.png`
+- `output/plots/eyfp_radius_coverage_zero.png`
