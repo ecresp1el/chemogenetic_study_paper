@@ -1,3 +1,22 @@
 # chemogenetic_analysis_paper
 
-Repository initialized locally and connected to GitHub.
+Python-only workflow for Sholl CSV import and tidying.
+
+## Conda Environment
+
+```bash
+conda env create -f environment.yml
+conda activate chemogenetic_analysis_paper
+```
+
+## Tidy the Input CSV
+
+```bash
+python scripts/tidy_sholl_csv.py
+```
+
+Default input:
+- `input_data/Sholl_Analysis_unsorted.csv`
+
+Default output:
+- `output/tidy_sholl_analysis.csv`

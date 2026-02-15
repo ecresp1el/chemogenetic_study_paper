@@ -1,0 +1,6 @@
+name: chemogenetic_analysis_paper
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pandas
