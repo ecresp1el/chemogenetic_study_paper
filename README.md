@@ -76,3 +76,17 @@ Outputs:
 - `output/plots/psam_radius_coverage_zero.png`
 - `output/plots/lmo7_radius_coverage_zero.png`
 - `output/plots/eyfp_radius_coverage_zero.png`
+
+## Activation vs Expression in 1x4 Layout
+
+```bash
+python scripts/plot_activation_vs_expression_1x4.py
+```
+
+Creates a single `1x4` figure with one panel per technology (`DREADD`, `PSAM`, `LMO7`, `EYFP`) showing:
+- Group I (Activation)
+- Group II (Expression only)
+
+Outputs:
+- `output/plots/activation_vs_expression_1x4.png`
+- `output/plots/activation_vs_expression_mean_sem.csv`
