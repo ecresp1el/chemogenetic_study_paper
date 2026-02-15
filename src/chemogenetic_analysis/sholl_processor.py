@@ -189,6 +189,56 @@ class ShollDataProcessor:
         recoded_df.to_csv(output, index=False)
         return output
 
+    def summarize_cell_counts(
+        self,
+        recoded_df: pd.DataFrame | None = None,
+        split_shared_control: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Summarize total unique cells per analysis group and condition.
+
+        A cell is identified by source condition + replicate (+ sample_id when present).
+        """
+        if recoded_df is None:
+            recoded_df = self.recode_conditions(split_shared_control=split_shared_control)
+
+        counts_df = recoded_df.copy()
+        sample_series = counts_df["sample_id"].where(
+            counts_df["sample_id"].notna(), "NA"
+        ).astype(str)
+        counts_df["cell_id"] = (
+            counts_df["source_condition"].astype(str)
+            + "__r"
+            + counts_df["replicate"].astype(int).astype(str)
+            + "__s"
+            + sample_series
+        )
+
+        summary_df = (
+            counts_df.groupby(["analysis_group", "condition"], as_index=False)["cell_id"]
+            .nunique()
+            .rename(columns={"cell_id": "total_cells"})
+            .sort_values(["analysis_group", "condition"])
+            .reset_index(drop=True)
+        )
+
+        return summary_df
+
+    def write_cell_count_summary(
+        self,
+        output_path: str | Path,
+        split_shared_control: bool = True,
+    ) -> Path:
+        """Write total unique cells per group/condition to CSV."""
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        recoded_df = self.recode_conditions(split_shared_control=split_shared_control)
+        summary_df = self.summarize_cell_counts(
+            recoded_df=recoded_df, split_shared_control=split_shared_control
+        )
+        summary_df.to_csv(output, index=False)
+        return output
+
     @staticmethod
     def _parse_column(column_name: str) -> tuple[str, int]:
         """

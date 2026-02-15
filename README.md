@@ -29,6 +29,7 @@ python scripts/recode_sholl_conditions.py
 
 Default output:
 - `output/tidy_sholl_analysis_grouped.csv`
+- `output/cell_counts_by_group_condition.csv` (total cells by group and condition)
 
 Current recode assumptions:
 - `CONTROL` and `CONTROL/MEDIA` -> `EYFP_Vehicle`
