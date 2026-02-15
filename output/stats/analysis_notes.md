@@ -16,8 +16,8 @@
 ## Experiment variable assumption
 - The source data does not include an explicit `Experiment` column.
 - This pipeline uses:
-  - `sample_id` when present.
-  - Otherwise, `"{actuator}_rep{replicate}"` for primary conditions.
+  - For primary actuator conditions, `"{actuator}_rep{replicate}"` to align vehicle/stim pairs.
+  - Otherwise, `sample_id` when present.
   - Fallback to `"{source_condition}_rep{replicate}"`.
 
 ## Fallback behavior

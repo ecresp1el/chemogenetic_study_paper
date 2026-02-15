@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
+from scipy import stats
 
 from .sholl_processor import ShollDataProcessor
 
@@ -34,13 +35,43 @@ class ShollStatsAnalyzer:
       auc ~ C(actuator) * stimulation_binary + (1 | experiment)
     """
 
-    PRIMARY_CONDITIONS = {
-        "DREADD_CNO": ("DREADD", "Stimulated"),
-        "DREADD_Vehicle": ("DREADD", "Vehicle"),
-        "LMO7_hCTZ": ("LMO7", "Stimulated"),
-        "LMO7_Vehicle": ("LMO7", "Vehicle"),
-        "PSAM_uPSEM": ("PSAM", "Stimulated"),
-        "PSAM_Vehicle": ("PSAM", "Vehicle"),
+    CONDITION_METADATA = {
+        "DREADD_CNO": {"actuator": "DREADD", "stimulation": "Stimulated", "ligand": "CNO"},
+        "DREADD_Vehicle": {"actuator": "DREADD", "stimulation": "Vehicle", "ligand": "none"},
+        "LMO7_hCTZ": {"actuator": "LMO7", "stimulation": "Stimulated", "ligand": "hCTZ"},
+        "LMO7_Vehicle": {"actuator": "LMO7", "stimulation": "Vehicle", "ligand": "none"},
+        "PSAM_uPSEM": {"actuator": "PSAM", "stimulation": "Stimulated", "ligand": "uPSEM"},
+        "PSAM_Vehicle": {"actuator": "PSAM", "stimulation": "Vehicle", "ligand": "none"},
+        "EYFP_Control": {"actuator": "EYFP", "stimulation": "Vehicle", "ligand": "none"},
+        "EYFP_Control_Media": {"actuator": "EYFP", "stimulation": "Stimulated", "ligand": "none"},
+        "None_CNO": {
+            "actuator": "NoActuator",
+            "stimulation": "Stimulated",
+            "ligand": "CNO",
+        },
+        "None_hCTZ": {
+            "actuator": "NoActuator",
+            "stimulation": "Stimulated",
+            "ligand": "hCTZ",
+        },
+        "None_uPSEM": {
+            "actuator": "NoActuator",
+            "stimulation": "Stimulated",
+            "ligand": "uPSEM",
+        },
+        "None_Vehicle": {
+            "actuator": "NoActuator",
+            "stimulation": "Vehicle",
+            "ligand": "none",
+        },
+    }
+    PRIMARY_CONDITION_SET = {
+        "DREADD_CNO",
+        "DREADD_Vehicle",
+        "LMO7_hCTZ",
+        "LMO7_Vehicle",
+        "PSAM_uPSEM",
+        "PSAM_Vehicle",
     }
 
     ACTUATOR_ORDER = ["DREADD", "LMO7", "PSAM"]
@@ -93,15 +124,23 @@ class ShollStatsAnalyzer:
                 sample_id,
                 cell_id,
             ) = keys
-            actuator, stimulation = self.PRIMARY_CONDITIONS.get(condition, (None, None))
+            meta = self.CONDITION_METADATA.get(
+                condition,
+                {"actuator": "Unknown", "stimulation": "Other", "ligand": "none"},
+            )
+            actuator = str(meta["actuator"])
+            stimulation = str(meta["stimulation"])
+            ligand = str(meta["ligand"])
 
             # Experiment proxy:
             # - use sample_id when available
-            # - otherwise use actuator+replicate for primary comparisons
+            # - otherwise use actuator+replicate for alignment across conditions
             # - fallback to source_condition+replicate
-            if pd.notna(sample_id):
+            if condition in self.PRIMARY_CONDITION_SET and actuator in self.ACTUATOR_ORDER:
+                experiment = f"{actuator}_rep{int(replicate)}"
+            elif pd.notna(sample_id):
                 experiment = str(sample_id)
-            elif actuator is not None:
+            elif actuator != "Unknown":
                 experiment = f"{actuator}_rep{int(replicate)}"
             else:
                 experiment = f"{source_condition}_rep{int(replicate)}"
@@ -121,13 +160,83 @@ class ShollStatsAnalyzer:
                     "auc": auc,
                     "actuator": actuator,
                     "stimulation": stimulation,
-                    "is_primary_condition": actuator is not None,
+                    "ligand": ligand,
+                    "is_primary_condition": condition in self.PRIMARY_CONDITION_SET,
                 }
             )
 
         auc_df = pd.DataFrame(rows)
         auc_df = auc_df.sort_values(["condition", "replicate"]).reset_index(drop=True)
         return auc_df
+
+    def build_clean_metadata_table(self, auc_df: pd.DataFrame) -> pd.DataFrame:
+        """Build one-row-per-neuron metadata table required for reanalysis."""
+        meta_df = auc_df[
+            [
+                "cell_id",
+                "experiment",
+                "actuator",
+                "stimulation",
+                "ligand",
+                "condition",
+                "source_condition",
+                "replicate",
+                "sample_id",
+            ]
+        ].copy()
+        meta_df = meta_df.rename(
+            columns={
+                "cell_id": "neuron_id",
+                "experiment": "experiment_id",
+                "stimulation": "condition_vehicle_vs_stim",
+            }
+        )
+        meta_df = meta_df.sort_values(["actuator", "condition", "replicate"]).reset_index(
+            drop=True
+        )
+        return meta_df
+
+    def apply_qc_rules(
+        self,
+        auc_df: pd.DataFrame,
+        min_radius_points: int = 20,
+        min_radius_max_um: float = 150.0,
+        iqr_multiplier: float = 3.0,
+    ) -> pd.DataFrame:
+        """
+        Apply predefined QC rules (non-manual) and return row-level QC flags.
+
+        Rules:
+        - Minimum number of radius points.
+        - Minimum max radius coverage.
+        - AUC inlier within condition using IQR fences.
+        """
+        qc_df = auc_df.copy()
+        qc_df["qc_min_points"] = qc_df["n_radius_points"] >= int(min_radius_points)
+        qc_df["qc_radius_coverage"] = qc_df["radius_max"] >= float(min_radius_max_um)
+        qc_df["qc_auc_inlier"] = True
+
+        for condition, idx in qc_df.groupby("condition").groups.items():
+            sub = qc_df.loc[idx, "auc"]
+            if len(sub) < 4:
+                continue
+            q1 = float(sub.quantile(0.25))
+            q3 = float(sub.quantile(0.75))
+            iqr = q3 - q1
+            low = q1 - iqr_multiplier * iqr
+            high = q3 + iqr_multiplier * iqr
+            qc_df.loc[idx, "qc_auc_inlier"] = (sub >= low) & (sub <= high)
+
+        qc_df["qc_pass"] = (
+            qc_df["qc_min_points"] & qc_df["qc_radius_coverage"] & qc_df["qc_auc_inlier"]
+        )
+        qc_df["qc_fail_reasons"] = ""
+        qc_df.loc[~qc_df["qc_min_points"], "qc_fail_reasons"] += "min_points;"
+        qc_df.loc[~qc_df["qc_radius_coverage"], "qc_fail_reasons"] += "radius_coverage;"
+        qc_df.loc[~qc_df["qc_auc_inlier"], "qc_fail_reasons"] += "auc_outlier;"
+        qc_df["qc_fail_reasons"] = qc_df["qc_fail_reasons"].str.rstrip(";")
+        qc_df = qc_df.sort_values(["condition", "replicate"]).reset_index(drop=True)
+        return qc_df
 
     def run_primary_within_actuator(self, auc_df: pd.DataFrame) -> pd.DataFrame:
         """Run within-actuator mixed models on AUC."""
@@ -210,6 +319,73 @@ class ShollStatsAnalyzer:
         key_df.insert(2, "n_neurons", int(len(sub)))
         key_df.insert(3, "n_experiments", int(sub["experiment"].nunique()))
         return coef_df, key_df
+
+    def summarize_experiment_deltas(
+        self, auc_df: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Cross-check with experiment-level deltas: stimulated - vehicle AUC.
+        """
+        sub = auc_df.loc[auc_df["actuator"].isin(self.ACTUATOR_ORDER)].copy()
+        exp_level = (
+            sub.groupby(["actuator", "experiment", "stimulation"], as_index=False)["auc"]
+            .mean()
+            .pivot_table(
+                index=["actuator", "experiment"],
+                columns="stimulation",
+                values="auc",
+                aggfunc="first",
+            )
+            .reset_index()
+        )
+        exp_level.columns.name = None
+        for col in ["Vehicle", "Stimulated"]:
+            if col not in exp_level.columns:
+                exp_level[col] = np.nan
+        exp_level = exp_level.rename(
+            columns={"Vehicle": "auc_vehicle", "Stimulated": "auc_stimulated"}
+        )
+        exp_level["delta_stim_minus_vehicle"] = (
+            exp_level["auc_stimulated"] - exp_level["auc_vehicle"]
+        )
+        exp_level["pair_complete"] = exp_level["auc_vehicle"].notna() & exp_level[
+            "auc_stimulated"
+        ].notna()
+        exp_level = exp_level.sort_values(["actuator", "experiment"]).reset_index(drop=True)
+
+        rows: list[dict[str, Any]] = []
+        for actuator in self.ACTUATOR_ORDER:
+            a = exp_level.loc[
+                (exp_level["actuator"] == actuator) & (exp_level["pair_complete"])
+            ].copy()
+            deltas = a["delta_stim_minus_vehicle"].dropna().to_numpy(dtype=float)
+            n = len(deltas)
+            ttest_p = np.nan
+            wilcoxon_p = np.nan
+            if n >= 2:
+                ttest_p = float(stats.ttest_1samp(deltas, popmean=0.0).pvalue)
+                try:
+                    wilcoxon_p = float(stats.wilcoxon(deltas).pvalue)
+                except ValueError:
+                    wilcoxon_p = np.nan
+            rows.append(
+                {
+                    "actuator": actuator,
+                    "n_paired_experiments": int(n),
+                    "mean_delta_stim_minus_vehicle": float(np.mean(deltas)) if n else np.nan,
+                    "median_delta_stim_minus_vehicle": float(np.median(deltas))
+                    if n
+                    else np.nan,
+                    "n_negative_delta": int(np.sum(deltas < 0)) if n else 0,
+                    "n_positive_delta": int(np.sum(deltas > 0)) if n else 0,
+                    "pct_negative_delta": float(np.mean(deltas < 0)) if n else np.nan,
+                    "ttest_pvalue_delta_zero": ttest_p,
+                    "wilcoxon_pvalue_delta_zero": wilcoxon_p,
+                }
+            )
+
+        summary_df = pd.DataFrame(rows)
+        return exp_level, summary_df
 
     @staticmethod
     def _fit_mixedlm_with_fallback(

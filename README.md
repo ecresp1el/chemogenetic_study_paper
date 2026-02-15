@@ -128,3 +128,21 @@ Outputs:
 - `output/stats/secondary_across_technologies_fixed_effects.csv`
 - `output/stats/secondary_key_tests.csv`
 - `output/stats/analysis_notes.md`
+
+## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)
+
+```bash
+python scripts/run_fast_fix_strategy.py
+```
+
+Outputs are saved to `output/stats/fast_fix/`:
+- `1_metadata_per_neuron.csv`
+- `2_auc_per_neuron_raw.csv`
+- `3_qc_flags_per_neuron.csv`
+- `3_auc_per_neuron_qc_pass.csv`
+- `4_primary_within_actuator_qc.csv`
+- `4_secondary_across_technologies_qc_fixed_effects.csv`
+- `4_secondary_across_technologies_qc_key_tests.csv`
+- `5_experiment_level_deltas.csv`
+- `5_experiment_level_delta_summary.csv`
+- `fast_fix_notes.md`

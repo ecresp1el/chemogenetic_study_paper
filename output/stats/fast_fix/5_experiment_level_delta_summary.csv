@@ -1,0 +1,4 @@
+actuator,n_paired_experiments,mean_delta_stim_minus_vehicle,median_delta_stim_minus_vehicle,n_negative_delta,n_positive_delta,pct_negative_delta,ttest_pvalue_delta_zero,wilcoxon_pvalue_delta_zero
+DREADD,9,-165.55555555555554,-295.0,5,4,0.5555555555555556,0.33056679651808196,0.42578125
+LMO7,5,-525.0,-270.0,5,0,1.0,0.13185091173935173,0.0625
+PSAM,10,-130.75,-311.25,7,3,0.7,0.3733899359134246,0.203125
