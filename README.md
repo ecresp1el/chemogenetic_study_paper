@@ -145,6 +145,45 @@ Outputs:
 - `output/stats/secondary_key_tests.csv`
 - `output/stats/analysis_notes.md`
 
+## Four-Condition Analysis Report
+
+```bash
+python scripts/create_condition_analysis_report.py
+```
+
+Creates a publication-style four-column report for the no-actuator treatment controls:
+`CNO`, `Media`, `hCTZ`, and `uPSEM`. It includes representative cells, individual-cell
+traces, treatment-color overlays, mean +/- SEM profiles, fold-change and AUC boxplots,
+and a grand mean overlay. The default output colors are CNO red, Media gray, hCTZ cyan,
+and uPSEM purple.
+
+Outputs:
+- `output/plots/no_actuator_analysis_report.png`
+- `output/plots/no_actuator_analysis_report_metrics.csv`
+
+## Major Actuator Analysis Reports
+
+```bash
+python scripts/create_major_actuator_reports.py
+```
+
+Creates matched four-condition reports for hM3Dq/DREADD, PSAM4-5HT3, and LMO7.
+Each report includes actuator + ligand, actuator + vehicle, ligand-only, and media-only
+conditions. The active actuator condition uses its locked tool color; every control is gray.
+
+## Major Group Analysis Reports
+
+```bash
+python scripts/create_major_group_reports.py
+```
+
+Creates the two reports that were missing from the three-arm study summary:
+- Group I treatment: hM3Dq + CNO, PSAM4-5HT3 + uPSEM, LMO7 + hCTZ, and EYFP + media
+- Group II vehicle: hM3Dq, PSAM4-5HT3, LMO7, and EYFP vector controls without Group-I treatment
+
+Together with `no_actuator_analysis_report.png` (Group III ligand/media-only control),
+these provide one report for each major study group.
+
 ## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)
 
 ```bash
