@@ -205,6 +205,26 @@ Creates a condition-wise AUC diagnostic using a 95% prediction interval for indi
 observations. It reports total, plotted, and candidate-excluded cell counts for every
 condition, without automatically changing the analysis dataset.
 
+## AUC Distribution Diagnostics
+
+```bash
+python scripts/run_auc_distribution_diagnostics.py
+```
+
+Writes per-cell Sholl AUC values, a condition-wise Shapiro-Wilk normality table, and
+normal Q-Q plots. AUC is the area under each cell's Sholl curve (intersections versus
+radius), and is the response variable used for the downstream statistical models.
+
+## AUC Variance Homogeneity
+
+```bash
+python scripts/run_auc_variance_homogeneity.py
+```
+
+Runs Brown-Forsythe tests (median-centered Levene tests) for the three primary actuator
+comparisons and each four-condition major group. Results include condition membership,
+cell counts, test statistic, p-value, and the equal-variance decision.
+
 ## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)
 
 ```bash

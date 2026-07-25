@@ -1,0 +1,4 @@
+comparison,conditions,n_conditions,n_total_cells,n_by_condition,brown_forsythe_statistic,brown_forsythe_pvalue,equal_variance_not_rejected_alpha,alpha
+DREADD: hM3Dq + CNO versus hM3Dq + vehicle,DREADD_CNO | DREADD_Vehicle,2,21,DREADD_CNO:12 | DREADD_Vehicle:9,0.013255198877581092,0.9095491560324876,True,0.05
+LMO7: hCTZ versus vehicle,LMO7_hCTZ | LMO7_Vehicle,2,20,LMO7_hCTZ:9 | LMO7_Vehicle:11,1.5547945437989783,0.22841098094410986,True,0.05
+PSAM4-5HT3: uPSEM versus vehicle,PSAM_uPSEM | PSAM_Vehicle,2,22,PSAM_uPSEM:12 | PSAM_Vehicle:10,0.002194693662904871,0.9630993665468083,True,0.05

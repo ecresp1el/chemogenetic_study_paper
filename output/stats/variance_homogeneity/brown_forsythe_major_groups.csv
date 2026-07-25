@@ -1,0 +1,4 @@
+comparison,conditions,n_conditions,n_total_cells,n_by_condition,brown_forsythe_statistic,brown_forsythe_pvalue,equal_variance_not_rejected_alpha,alpha
+Group I: treatment condition,DREADD_CNO | PSAM_uPSEM | LMO7_hCTZ | EYFP_Control_Media,4,44,DREADD_CNO:12 | PSAM_uPSEM:12 | LMO7_hCTZ:9 | EYFP_Control_Media:11,0.7536098177773025,0.5267809591860666,True,0.05
+Group II: vehicle condition,DREADD_Vehicle | PSAM_Vehicle | LMO7_Vehicle | EYFP_Control,4,42,DREADD_Vehicle:9 | PSAM_Vehicle:10 | LMO7_Vehicle:11 | EYFP_Control:12,1.7039987727934736,0.18250024041964208,True,0.05
+Group III: ligand/media-only control,None_CNO | None_uPSEM | None_hCTZ | None_Vehicle,4,43,None_CNO:11 | None_uPSEM:9 | None_hCTZ:12 | None_Vehicle:11,0.7969087719960701,0.5030856057780132,True,0.05

@@ -196,6 +196,91 @@ class ShollStatsAnalyzer:
         )
         return meta_df
 
+    @staticmethod
+    def assess_auc_normality(auc_df: pd.DataFrame, alpha: float = 0.05) -> pd.DataFrame:
+        """Assess within-condition AUC distributions with the Shapiro-Wilk test.
+
+        AUC is the area under each cell's Sholl curve (intersections versus radius),
+        used here as the response variable for distribution diagnostics and models.
+        """
+        if not 0 < alpha < 1:
+            raise ValueError("alpha must be between 0 and 1.")
+
+        rows: list[dict[str, object]] = []
+        for condition, sub in auc_df.groupby("condition", sort=True):
+            values = sub["auc"].dropna().to_numpy(dtype=float)
+            n = len(values)
+            if n >= 3:
+                shapiro_w, shapiro_pvalue = stats.shapiro(values)
+                skewness = float(stats.skew(values, bias=False)) if n > 2 else np.nan
+            else:
+                shapiro_w, shapiro_pvalue, skewness = np.nan, np.nan, np.nan
+            rows.append(
+                {
+                    "condition": condition,
+                    "n_cells": int(n),
+                    "mean_auc": float(np.mean(values)) if n else np.nan,
+                    "median_auc": float(np.median(values)) if n else np.nan,
+                    "sd_auc": float(np.std(values, ddof=1)) if n > 1 else np.nan,
+                    "skewness_auc": skewness,
+                    "shapiro_w": float(shapiro_w) if np.isfinite(shapiro_w) else np.nan,
+                    "shapiro_pvalue": float(shapiro_pvalue)
+                    if np.isfinite(shapiro_pvalue)
+                    else np.nan,
+                    "normality_not_rejected_alpha": bool(shapiro_pvalue >= alpha)
+                    if np.isfinite(shapiro_pvalue)
+                    else False,
+                    "alpha": float(alpha),
+                }
+            )
+        return pd.DataFrame(rows)
+
+    @staticmethod
+    def assess_auc_variance_homogeneity(
+        auc_df: pd.DataFrame,
+        comparison_sets: dict[str, list[str]],
+        alpha: float = 0.05,
+    ) -> pd.DataFrame:
+        """Run Brown-Forsythe tests for equal AUC variance across condition sets."""
+        if not 0 < alpha < 1:
+            raise ValueError("alpha must be between 0 and 1.")
+
+        rows: list[dict[str, object]] = []
+        available = set(auc_df["condition"].dropna().unique())
+        for comparison_name, conditions in comparison_sets.items():
+            missing = [condition for condition in conditions if condition not in available]
+            if missing:
+                raise ValueError(
+                    f"Unknown condition(s) in {comparison_name}: {', '.join(missing)}"
+                )
+            samples = [
+                auc_df.loc[auc_df["condition"] == condition, "auc"].dropna().to_numpy(dtype=float)
+                for condition in conditions
+            ]
+            if any(len(sample) < 2 for sample in samples):
+                statistic, pvalue = np.nan, np.nan
+            else:
+                result = stats.levene(*samples, center="median")
+                statistic, pvalue = float(result.statistic), float(result.pvalue)
+            rows.append(
+                {
+                    "comparison": comparison_name,
+                    "conditions": " | ".join(conditions),
+                    "n_conditions": len(conditions),
+                    "n_total_cells": int(sum(len(sample) for sample in samples)),
+                    "n_by_condition": " | ".join(
+                        f"{condition}:{len(sample)}" for condition, sample in zip(conditions, samples)
+                    ),
+                    "brown_forsythe_statistic": statistic,
+                    "brown_forsythe_pvalue": pvalue,
+                    "equal_variance_not_rejected_alpha": bool(pvalue >= alpha)
+                    if np.isfinite(pvalue)
+                    else False,
+                    "alpha": float(alpha),
+                }
+            )
+        return pd.DataFrame(rows)
+
     def apply_qc_rules(
         self,
         auc_df: pd.DataFrame,
