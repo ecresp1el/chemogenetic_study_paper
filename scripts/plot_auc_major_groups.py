@@ -75,21 +75,24 @@ class MajorGroupAUCFigure:
         x_max = max(metrics["auc"].max() for metrics in panel_metrics) * 1.08
 
         figure, axes = plt.subplots(
-            2,
             3,
-            figsize=(15.0, 9.0),
-            gridspec_kw={"height_ratios": [1.0, 1.1]},
+            3,
+            figsize=(15.0, 12.3),
+            gridspec_kw={"height_ratios": [1.0, 1.1, 1.0]},
         )
         for column, (panel, metrics) in enumerate(zip(self.PANELS, panel_metrics)):
             self._plot_box_panel(axes[0, column], panel, metrics, x_max)
             self._plot_bar_panel(axes[1, column], panel, metrics, x_max)
+            self._plot_normalized_box_panel(
+                axes[2, column], panel, metrics
+            )
 
         figure.suptitle("Area Under the Curve Across Major Study Groups", fontsize=14, fontweight="bold", y=0.97)
         figure.text(
             0.5,
             0.02,
             "Top: individual-cell AUC with interquartile-range boxes and median. "
-            "Bottom: mean AUC ± SEM with the same individual cells.",
+            "Middle: mean AUC ± SEM. Bottom: individual-cell fold change relative to the matched-control mean.",
             ha="center",
             fontsize=8,
         )
@@ -199,6 +202,63 @@ class MajorGroupAUCFigure:
         axis.spines[["top", "right"]].set_visible(False)
         axis.tick_params(axis="x", labelsize=7, length=2.5, pad=3)
         axis.tick_params(axis="y", labelsize=6.5, length=2.5, pad=3)
+        axis.grid(False)
+
+    @staticmethod
+    def _normalized_values(panel: AUCPanelSpec, metrics):
+        control_condition = panel.conditions[-1].condition
+        control_mean = float(
+            metrics.loc[metrics["condition"] == control_condition, "auc"].mean()
+        )
+        if control_mean <= 0:
+            raise ValueError(f"Matched-control mean AUC must be positive for {panel.title}.")
+        return metrics["auc"] / control_mean
+
+    @classmethod
+    def _plot_normalized_box_panel(cls, axis, panel: AUCPanelSpec, metrics) -> None:
+        normalized = metrics.copy()
+        normalized["normalized_auc"] = cls._normalized_values(panel, metrics)
+        values = [
+            normalized.loc[normalized["condition"] == spec.condition, "normalized_auc"].to_numpy()
+            for spec in panel.conditions
+        ]
+        positions = np.arange(len(panel.conditions))
+        boxplot = axis.boxplot(
+            values,
+            vert=False,
+            positions=positions,
+            widths=0.55,
+            patch_artist=True,
+            showfliers=False,
+            medianprops={"color": "#333333", "linewidth": 1.0},
+            boxprops={"linewidth": 0.8},
+            whiskerprops={"linewidth": 0.8},
+            capprops={"linewidth": 0.8},
+        )
+        rng = np.random.default_rng(20260728)
+        y_labels = []
+        for index, (spec, value) in enumerate(zip(panel.conditions, values)):
+            boxplot["boxes"][index].set_facecolor(spec.color)
+            boxplot["boxes"][index].set_alpha(0.22)
+            axis.scatter(
+                value,
+                rng.normal(index, 0.06, len(value)),
+                s=15,
+                color=spec.color,
+                alpha=0.9,
+                linewidths=0,
+                zorder=3,
+            )
+            y_labels.append(f"{spec.label} (n={len(value)})")
+
+        axis.axvline(1.0, color="#555555", linestyle="--", linewidth=0.8, zorder=0)
+        axis.set_yticks(positions, y_labels)
+        axis.invert_yaxis()
+        axis.set_xlim(0, 3)
+        axis.set_xlabel("Fold change (AUC / matched-control mean)")
+        axis.set_title("Fold change vs matched control", fontsize=9, pad=8)
+        axis.spines[["top", "right"]].set_visible(False)
+        axis.tick_params(axis="both", labelsize=7, length=2.5, pad=3)
         axis.grid(False)
 
 
