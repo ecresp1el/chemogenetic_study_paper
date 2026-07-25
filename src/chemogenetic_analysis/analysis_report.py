@@ -23,10 +23,10 @@ class ConditionAnalysisReport:
     """Build a four-condition, multi-level Sholl analysis-report figure."""
 
     DEFAULT_CONDITIONS = (
-        ReportCondition("None_CNO", "CNO", "#D1495B"),
+        ReportCondition("None_CNO", "CNO", "#B7D7A8"),
         ReportCondition("None_Vehicle", "Media", "#9AA0A6"),
-        ReportCondition("None_hCTZ", "hCTZ", "#46B3C3"),
-        ReportCondition("None_uPSEM", "uPSEM", "#8E7CC3"),
+        ReportCondition("None_hCTZ", "hCTZ", "#A9DCE5"),
+        ReportCondition("None_uPSEM", "uPSEM", "#C9C2E4"),
     )
 
     def __init__(

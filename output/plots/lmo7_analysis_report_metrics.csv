@@ -1,4 +1,4 @@
-condition,replicate,cell_label,auc,fold_change_vs_media
+condition,replicate,cell_label,auc,fold_change_vs_reference
 LMO7_hCTZ,1,Cell 1,1242.5,0.5553072625698324
 LMO7_hCTZ,2,Cell 2,1567.5,0.7005586592178771
 LMO7_hCTZ,3,Cell 3,632.5,0.28268156424581004

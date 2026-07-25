@@ -46,7 +46,8 @@ Color policy is locked across every figure:
 - hM3Dq/DREADD + CNO: green (`#6AA84F`)
 - LMO7 + hCTZ: cyan (`#46B3C3`)
 - PSAM4-5HT3 + uPSEM: purple (`#8E7CC3`)
-- all control conditions (vehicle, EYFP, ligand-only, and media-only): gray (`#9AA0A6`)
+- CNO-only, hCTZ-only, and uPSEM-only: lighter green, cyan, and purple versions of their matched treatment
+- vehicle, EYFP, and media-only controls: gray (`#9AA0A6`)
 
 The group-comparison figures use a separate palette and never reuse those
 technology colors: Group I treatment is gold (`#C9A227`), while Groups II and
@@ -183,6 +184,26 @@ Creates the two reports that were missing from the three-arm study summary:
 
 Together with `no_actuator_analysis_report.png` (Group III ligand/media-only control),
 these provide one report for each major study group.
+
+## AUC Comparison Across Major Groups
+
+```bash
+python scripts/plot_auc_major_groups.py
+```
+
+Creates a three-panel AUC dot-and-box figure for Groups III, II, and I. Each y-axis
+uses the full biological condition label and its cell count, including the correct
+vector, ligand-only, and media-only controls for that major group.
+
+## Condition-Level AUC Outlier QC
+
+```bash
+python scripts/plot_auc_outlier_qc.py
+```
+
+Creates a condition-wise AUC diagnostic using a 95% prediction interval for individual
+observations. It reports total, plotted, and candidate-excluded cell counts for every
+condition, without automatically changing the analysis dataset.
 
 ## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)
 

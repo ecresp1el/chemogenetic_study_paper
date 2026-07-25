@@ -31,7 +31,7 @@ REPORTS = (
         conditions=(
             ReportCondition("DREADD_CNO", "hM3Dq + CNO", "#6AA84F"),
             ReportCondition("DREADD_Vehicle", "hM3Dq + vehicle", CONTROL_GRAY),
-            ReportCondition("None_CNO", "CNO only", CONTROL_GRAY),
+            ReportCondition("None_CNO", "CNO only", "#B7D7A8"),
             ReportCondition("None_Vehicle", "Media only", CONTROL_GRAY),
         ),
     ),
@@ -41,7 +41,7 @@ REPORTS = (
         conditions=(
             ReportCondition("PSAM_uPSEM", "PSAM4-5HT3 + uPSEM", "#8E7CC3"),
             ReportCondition("PSAM_Vehicle", "PSAM4-5HT3 + vehicle", CONTROL_GRAY),
-            ReportCondition("None_uPSEM", "uPSEM only", CONTROL_GRAY),
+            ReportCondition("None_uPSEM", "uPSEM only", "#C9C2E4"),
             ReportCondition("None_Vehicle", "Media only", CONTROL_GRAY),
         ),
     ),
@@ -51,7 +51,7 @@ REPORTS = (
         conditions=(
             ReportCondition("LMO7_hCTZ", "LMO7 + hCTZ", "#46B3C3"),
             ReportCondition("LMO7_Vehicle", "LMO7 + vehicle", CONTROL_GRAY),
-            ReportCondition("None_hCTZ", "hCTZ only", CONTROL_GRAY),
+            ReportCondition("None_hCTZ", "hCTZ only", "#A9DCE5"),
             ReportCondition("None_Vehicle", "Media only", CONTROL_GRAY),
         ),
     ),

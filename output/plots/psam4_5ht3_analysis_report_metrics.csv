@@ -1,4 +1,4 @@
-condition,replicate,cell_label,auc,fold_change_vs_media
+condition,replicate,cell_label,auc,fold_change_vs_reference
 PSAM_uPSEM,1,Cell 1,1165.0,0.5206703910614525
 PSAM_uPSEM,2,Cell 2,1915.0,0.8558659217877095
 PSAM_uPSEM,3,Cell 3,947.5,0.423463687150838

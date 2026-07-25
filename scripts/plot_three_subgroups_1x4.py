@@ -101,7 +101,11 @@ def main() -> None:
             if line_df.empty:
                 continue
 
-            color = processor.color_for_group_comparison(group_name)
+            color = (
+                processor.color_for_condition(condition_name)
+                if group_name == ShollDataProcessor.GROUP_III_LIGAND_MEDIA_CONTROL
+                else processor.color_for_group_comparison(group_name)
+            )
             x = line_df["radius_um"] + group_offsets.get(group_name, 0.0)
             y = line_df["mean_intersections"]
             sem = line_df["sem_intersections"]

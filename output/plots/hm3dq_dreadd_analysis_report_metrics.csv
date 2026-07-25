@@ -1,4 +1,4 @@
-condition,replicate,cell_label,auc,fold_change_vs_media
+condition,replicate,cell_label,auc,fold_change_vs_reference
 DREADD_CNO,1,Cell 1,1907.5,0.852513966480447
 DREADD_CNO,2,Cell 2,1767.5,0.7899441340782123
 DREADD_CNO,3,Cell 3,942.5,0.4212290502793296

@@ -19,6 +19,11 @@ class ShollDataProcessor:
         "LMO7_hCTZ": "#46B3C3",  # LMO7 cyan
         "PSAM_uPSEM": "#8E7CC3",  # PSAM4-5HT3 purple
     }
+    LIGAND_ONLY_COLORS = {
+        "None_CNO": "#B7D7A8",  # light hM3Dq green
+        "None_hCTZ": "#A9DCE5",  # light LMO7 cyan
+        "None_uPSEM": "#C9C2E4",  # light PSAM4-5HT3 purple
+    }
     GROUP_COMPARISON_COLORS = {
         GROUP_I_TREATMENT: "#C9A227",  # treatment gold; distinct from tool colors
         GROUP_II_VEHICLE: CONTROL_COLOR,
@@ -88,10 +93,12 @@ class ShollDataProcessor:
     def color_for_condition(cls, condition: str) -> str:
         """Return the locked display color for a study condition.
 
-        Only the active chemogenetic-tool conditions receive tool-specific colors.
-        Vehicle, EYFP, ligand/media-only, and all other control conditions are dark gray.
+        Active tool conditions use their full tool color; ligand-only conditions use
+        the corresponding lighter tool color. Vehicle, EYFP, and media controls are gray.
         """
-        return cls.CHEMOGENETIC_TOOL_COLORS.get(condition, cls.CONTROL_COLOR)
+        return cls.CHEMOGENETIC_TOOL_COLORS.get(
+            condition, cls.LIGAND_ONLY_COLORS.get(condition, cls.CONTROL_COLOR)
+        )
 
     @classmethod
     def color_for_group_comparison(cls, analysis_group: str) -> str:
