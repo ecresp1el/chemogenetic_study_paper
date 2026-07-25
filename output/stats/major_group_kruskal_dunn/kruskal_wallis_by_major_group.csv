@@ -1,0 +1,4 @@
+major_group,control_condition,treatment_conditions,n_total_cells,kruskal_wallis_h_statistic,kruskal_wallis_pvalue,tie_correction
+Group I: treatment condition,EYFP_Control_Media,DREADD_CNO | LMO7_hCTZ | PSAM_uPSEM,44,4.874295139712004,0.18123670554688867,0.9999295278365046
+Group II: vehicle condition,EYFP_Control,DREADD_Vehicle | LMO7_Vehicle | PSAM_Vehicle,42,9.901885969327822,0.019418818933054416,1.0
+Group III: ligand/media-only control,None_Vehicle,None_CNO | None_hCTZ | None_uPSEM,43,11.214251393426878,0.010621996667541444,1.0

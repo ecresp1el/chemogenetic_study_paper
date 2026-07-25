@@ -237,6 +237,16 @@ EYFP/media control. It writes both raw-AUC results and fold-change results, wher
 cell is divided by its major group’s shared-control mean AUC; the two result types have
 clear filenames and `analysis_scale` labels.
 
+## Major-Group Kruskal-Wallis and Dunn Contrasts
+
+```bash
+python scripts/run_major_group_kruskal_dunn.py
+```
+
+Runs a nonparametric companion analysis within each major group: one Kruskal-Wallis test,
+then Dunn contrasts of the three actuator conditions against the group’s shared control.
+Holm-adjusted p-values are primary; Bonferroni-adjusted values are also included.
+
 ## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)
 
 ```bash

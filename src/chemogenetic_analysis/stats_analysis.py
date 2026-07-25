@@ -349,6 +349,99 @@ class ShollStatsAnalyzer:
             )
         return anova_df, pd.DataFrame(contrast_rows)
 
+    @staticmethod
+    def run_kruskal_dunn(
+        auc_df: pd.DataFrame,
+        control_condition: str,
+        treatment_conditions: list[str],
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """Run Kruskal-Wallis and control-versus-treatment Dunn contrasts.
+
+        Dunn p-values are returned with both Holm and Bonferroni adjustment across
+        the prespecified treatment-versus-shared-control contrasts in one study group.
+        """
+        conditions = [control_condition, *treatment_conditions]
+        available = set(auc_df["condition"].dropna().unique())
+        missing = [condition for condition in conditions if condition not in available]
+        if missing:
+            raise ValueError(f"Unknown condition(s): {', '.join(missing)}")
+
+        samples = {
+            condition: auc_df.loc[auc_df["condition"] == condition, "auc"]
+            .dropna()
+            .to_numpy(dtype=float)
+            for condition in conditions
+        }
+        if any(len(values) < 2 for values in samples.values()):
+            raise ValueError("All Kruskal-Wallis and Dunn conditions require at least two AUC observations.")
+
+        kruskal = stats.kruskal(*(samples[condition] for condition in conditions))
+        all_values = np.concatenate([samples[condition] for condition in conditions])
+        all_ranks = stats.rankdata(all_values)
+        total_n = len(all_values)
+        _, tie_counts = np.unique(all_values, return_counts=True)
+        tie_correction = 1.0 - np.sum(tie_counts**3 - tie_counts) / (total_n**3 - total_n)
+        rank_variance = total_n * (total_n + 1.0) / 12.0 * tie_correction
+
+        rank_means: dict[str, float] = {}
+        start = 0
+        for condition in conditions:
+            end = start + len(samples[condition])
+            rank_means[condition] = float(np.mean(all_ranks[start:end]))
+            start = end
+
+        raw_pvalues: list[float] = []
+        contrast_rows: list[dict[str, object]] = []
+        for treatment in treatment_conditions:
+            standard_error = np.sqrt(
+                rank_variance
+                * (1.0 / len(samples[control_condition]) + 1.0 / len(samples[treatment]))
+            )
+            z_statistic = (rank_means[treatment] - rank_means[control_condition]) / standard_error
+            pvalue = float(2.0 * stats.norm.sf(abs(z_statistic)))
+            raw_pvalues.append(pvalue)
+            contrast_rows.append(
+                {
+                    "control_condition": control_condition,
+                    "treatment_condition": treatment,
+                    "n_control": int(len(samples[control_condition])),
+                    "n_treatment": int(len(samples[treatment])),
+                    "mean_rank_control": rank_means[control_condition],
+                    "mean_rank_treatment": rank_means[treatment],
+                    "mean_rank_difference_treatment_minus_control": rank_means[treatment]
+                    - rank_means[control_condition],
+                    "dunn_z_statistic": float(z_statistic),
+                    "dunn_pvalue_unadjusted": pvalue,
+                }
+            )
+
+        raw_pvalues_array = np.asarray(raw_pvalues, dtype=float)
+        order = np.argsort(raw_pvalues_array)
+        holm_sorted = np.maximum.accumulate(
+            (len(raw_pvalues_array) - np.arange(len(raw_pvalues_array)))
+            * raw_pvalues_array[order]
+        )
+        holm = np.empty_like(raw_pvalues_array)
+        holm[order] = np.minimum(holm_sorted, 1.0)
+        bonferroni = np.minimum(raw_pvalues_array * len(raw_pvalues_array), 1.0)
+        for index, row in enumerate(contrast_rows):
+            row["dunn_pvalue_holm_adjusted"] = float(holm[index])
+            row["dunn_pvalue_bonferroni_adjusted"] = float(bonferroni[index])
+
+        kruskal_df = pd.DataFrame(
+            [
+                {
+                    "control_condition": control_condition,
+                    "treatment_conditions": " | ".join(treatment_conditions),
+                    "n_total_cells": int(total_n),
+                    "kruskal_wallis_h_statistic": float(kruskal.statistic),
+                    "kruskal_wallis_pvalue": float(kruskal.pvalue),
+                    "tie_correction": float(tie_correction),
+                }
+            ]
+        )
+        return kruskal_df, pd.DataFrame(contrast_rows)
+
     def apply_qc_rules(
         self,
         auc_df: pd.DataFrame,
