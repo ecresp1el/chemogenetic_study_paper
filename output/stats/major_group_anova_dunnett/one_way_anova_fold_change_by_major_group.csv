@@ -1,0 +1,4 @@
+major_group,analysis_scale,normalization_control_mean_auc,control_condition,treatment_conditions,n_control,n_treatments_total,anova_f_statistic,anova_pvalue
+Group I: treatment condition,fold_change_vs_shared_control_mean,1299.7727272727273,EYFP_Control_Media,DREADD_CNO | LMO7_hCTZ | PSAM_uPSEM,11,33,1.4138380900598682,0.2528686706727895
+Group II: vehicle condition,fold_change_vs_shared_control_mean,2086.25,EYFP_Control,DREADD_Vehicle | LMO7_Vehicle | PSAM_Vehicle,12,30,3.5581044897013454,0.02304192889739452
+Group III: ligand/media-only control,fold_change_vs_shared_control_mean,2391.818181818182,None_Vehicle,None_CNO | None_hCTZ | None_uPSEM,11,32,4.984679571931024,0.005055527022452125

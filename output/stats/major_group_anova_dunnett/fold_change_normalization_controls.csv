@@ -1,0 +1,4 @@
+major_group,normalization_control_condition,normalization_control_mean_auc,formula
+Group I: treatment condition,EYFP_Control_Media,1299.7727272727273,cell_auc / shared_control_mean_auc
+Group II: vehicle condition,EYFP_Control,2086.25,cell_auc / shared_control_mean_auc
+Group III: ligand/media-only control,None_Vehicle,2391.818181818182,cell_auc / shared_control_mean_auc

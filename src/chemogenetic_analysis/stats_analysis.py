@@ -281,6 +281,74 @@ class ShollStatsAnalyzer:
             )
         return pd.DataFrame(rows)
 
+    @staticmethod
+    def run_one_way_anova_dunnett(
+        auc_df: pd.DataFrame,
+        control_condition: str,
+        treatment_conditions: list[str],
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """Run one-way ANOVA and Dunnett contrasts against one shared control.
+
+        This is appropriate when all treatment conditions within a study group are
+        compared to the same control condition, rather than to one another.
+        """
+        conditions = [control_condition, *treatment_conditions]
+        available = set(auc_df["condition"].dropna().unique())
+        missing = [condition for condition in conditions if condition not in available]
+        if missing:
+            raise ValueError(f"Unknown condition(s): {', '.join(missing)}")
+
+        control_values = auc_df.loc[
+            auc_df["condition"] == control_condition, "auc"
+        ].dropna().to_numpy(dtype=float)
+        treatment_values = [
+            auc_df.loc[auc_df["condition"] == condition, "auc"].dropna().to_numpy(dtype=float)
+            for condition in treatment_conditions
+        ]
+        if len(control_values) < 2 or any(len(values) < 2 for values in treatment_values):
+            raise ValueError("All Dunnett conditions require at least two AUC observations.")
+
+        anova = stats.f_oneway(control_values, *treatment_values)
+        dunnett = stats.dunnett(
+            *treatment_values,
+            control=control_values,
+            alternative="two-sided",
+            rng=20260729,
+        )
+        confidence_interval = dunnett.confidence_interval()
+        anova_df = pd.DataFrame(
+            [
+                {
+                    "control_condition": control_condition,
+                    "treatment_conditions": " | ".join(treatment_conditions),
+                    "n_control": int(len(control_values)),
+                    "n_treatments_total": int(sum(len(values) for values in treatment_values)),
+                    "anova_f_statistic": float(anova.statistic),
+                    "anova_pvalue": float(anova.pvalue),
+                }
+            ]
+        )
+        contrast_rows: list[dict[str, object]] = []
+        for index, (condition, values) in enumerate(zip(treatment_conditions, treatment_values)):
+            contrast_rows.append(
+                {
+                    "control_condition": control_condition,
+                    "treatment_condition": condition,
+                    "n_control": int(len(control_values)),
+                    "n_treatment": int(len(values)),
+                    "mean_auc_control": float(np.mean(control_values)),
+                    "mean_auc_treatment": float(np.mean(values)),
+                    "mean_difference_treatment_minus_control": float(
+                        np.mean(values) - np.mean(control_values)
+                    ),
+                    "dunnett_statistic": float(dunnett.statistic[index]),
+                    "dunnett_pvalue_adjusted": float(dunnett.pvalue[index]),
+                    "ci_low_difference": float(confidence_interval.low[index]),
+                    "ci_high_difference": float(confidence_interval.high[index]),
+                }
+            )
+        return anova_df, pd.DataFrame(contrast_rows)
+
     def apply_qc_rules(
         self,
         auc_df: pd.DataFrame,

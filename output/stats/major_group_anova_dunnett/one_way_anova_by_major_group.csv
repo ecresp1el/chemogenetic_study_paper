@@ -1,0 +1,4 @@
+major_group,analysis_scale,control_condition,treatment_conditions,n_control,n_treatments_total,anova_f_statistic,anova_pvalue
+Group I: treatment condition,raw_auc,EYFP_Control_Media,DREADD_CNO | LMO7_hCTZ | PSAM_uPSEM,11,33,1.4138380900598677,0.25286867067278923
+Group II: vehicle condition,raw_auc,EYFP_Control,DREADD_Vehicle | LMO7_Vehicle | PSAM_Vehicle,12,30,3.558104489701348,0.023041928897394474
+Group III: ligand/media-only control,raw_auc,None_Vehicle,None_CNO | None_hCTZ | None_uPSEM,11,32,4.984679571931026,0.005055527022452125

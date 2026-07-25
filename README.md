@@ -225,6 +225,18 @@ Runs Brown-Forsythe tests (median-centered Levene tests) for the three primary a
 comparisons and each four-condition major group. Results include condition membership,
 cell counts, test statistic, p-value, and the equal-variance decision.
 
+## Major-Group One-Way ANOVA and Dunnett Contrasts
+
+```bash
+python scripts/run_major_group_anova_dunnett.py
+```
+
+Runs one one-way ANOVA within each major study group, followed by Dunnett-adjusted
+contrasts of hM3Dq, LMO7, and PSAM4-5HT3 conditions against that group’s single shared
+EYFP/media control. It writes both raw-AUC results and fold-change results, where every
+cell is divided by its major group’s shared-control mean AUC; the two result types have
+clear filenames and `analysis_scale` labels.
+
 ## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)
 
 ```bash
