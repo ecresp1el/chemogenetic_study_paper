@@ -15,10 +15,13 @@ from chemogenetic_analysis import ShollDataProcessor
 
 
 TECH_ORDER = ["DREADD", "PSAM", "LMO7", "EYFP"]
-GROUPS = ["Group I (Activation)", "Group II (Expression only)"]
+GROUPS = [
+    ShollDataProcessor.GROUP_I_TREATMENT,
+    ShollDataProcessor.GROUP_II_VEHICLE,
+]
 GROUP_MARKERS = {
-    "Group I (Activation)": "o",
-    "Group II (Expression only)": "s",
+    ShollDataProcessor.GROUP_I_TREATMENT: "o",
+    ShollDataProcessor.GROUP_II_VEHICLE: "s",
 }
 
 
@@ -26,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Create a 1x4 panel figure (one panel per technology) showing "
-            "Activation vs Expression mean (dots) and SEM (error bars)."
+            "Treatment vs vehicle mean (dots) and SEM (error bars)."
         )
     )
     parser.add_argument(
@@ -36,13 +39,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default=str(REPO_ROOT / "output" / "plots" / "activation_vs_expression_1x4.png"),
+        default=str(REPO_ROOT / "output" / "plots" / "treatment_vs_vehicle_1x4.png"),
         help="Path for output figure.",
     )
     parser.add_argument(
         "--summary-output",
         default=str(
-            REPO_ROOT / "output" / "plots" / "activation_vs_expression_mean_sem.csv"
+            REPO_ROOT / "output" / "plots" / "treatment_vs_vehicle_mean_sem.csv"
         ),
         help="Path for filtered mean/SEM summary CSV.",
     )
@@ -72,8 +75,8 @@ def main() -> None:
 
     fig, axes = plt.subplots(1, 4, figsize=(22, 5), sharey=True)
     group_offsets = {
-        "Group I (Activation)": -1.0,
-        "Group II (Expression only)": 1.0,
+        ShollDataProcessor.GROUP_I_TREATMENT: -1.0,
+        ShollDataProcessor.GROUP_II_VEHICLE: 1.0,
     }
 
     for idx, technology in enumerate(TECH_ORDER):
@@ -111,12 +114,12 @@ def main() -> None:
             )
 
         ax.set_title(technology)
-        activation_cond = tech_map.get("Group I (Activation)", "NA")
-        expression_cond = tech_map.get("Group II (Expression only)", "NA")
+        treatment_cond = tech_map.get(ShollDataProcessor.GROUP_I_TREATMENT, "NA")
+        vehicle_cond = tech_map.get(ShollDataProcessor.GROUP_II_VEHICLE, "NA")
         ax.text(
             0.02,
             0.98,
-            f"A: {activation_cond}\nE: {expression_cond}",
+            f"T: {treatment_cond}\nV: {vehicle_cond}",
             transform=ax.transAxes,
             ha="left",
             va="top",
@@ -147,7 +150,7 @@ def main() -> None:
         frameon=False,
         bbox_to_anchor=(0.5, 1.02),
     )
-    fig.suptitle("Activation vs Expression: Mean (dots) +/- SEM (bars)", y=1.08)
+    fig.suptitle("Treatment vs Vehicle: Mean (dots) +/- SEM (bars)", y=1.08)
     fig.tight_layout()
 
     output_path = Path(args.output)

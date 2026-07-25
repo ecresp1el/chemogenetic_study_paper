@@ -36,6 +36,12 @@ Current recode assumptions:
 - `CONTROL/MEDIA` -> `EYFP_Control_Media`
 - `MEDIA` -> `None_Vehicle`
 
+Analysis-group definitions preserve the original three study arms without implying
+that the EYFP vector control is chemogenetically activated:
+- Group I (Treatment condition): actuator plus its matched ligand, or EYFP plus matched media
+- Group II (Vehicle condition): actuator-vector or EYFP-vector without the Group-I treatment
+- Group III (Ligand/media-only control): ligand-only or media-only control without an actuator vector
+
 ## Plot Mean +/- SEM By Technology
 
 ```bash
@@ -43,14 +49,14 @@ python scripts/plot_technology_overlays.py
 ```
 
 This writes 4 plots (DREADD, PSAM, LMO7, EYFP), each containing:
-- Group I (Activation)
-- Group II (Expression only)
-- Group III (Effector only)
+- Group I (Treatment condition)
+- Group II (Vehicle condition)
+- Group III (Ligand/media-only control)
 
 Plot style:
 - Mean as dots at each radius
 - SEM as vertical error bars
-- Small x-offset by group so overlapping groups (for example EYFP Activation vs Expression) are both visible
+- Small x-offset by group so overlapping groups (for example the EYFP treatment and vehicle conditions) are both visible
 
 Outputs:
 - `output/plots/mean_sem_by_technology_group.csv`
@@ -78,19 +84,19 @@ Outputs:
 - `output/plots/lmo7_radius_coverage_zero.png`
 - `output/plots/eyfp_radius_coverage_zero.png`
 
-## Activation vs Expression in 1x4 Layout
+## Treatment vs Vehicle in 1x4 Layout
 
 ```bash
-python scripts/plot_activation_vs_expression_1x4.py
+python scripts/plot_treatment_vs_vehicle_1x4.py
 ```
 
 Creates a single `1x4` figure with one panel per technology (`DREADD`, `PSAM`, `LMO7`, `EYFP`) showing:
-- Group I (Activation)
-- Group II (Expression only)
+- Group I (Treatment condition)
+- Group II (Vehicle condition)
 
 Outputs:
-- `output/plots/activation_vs_expression_1x4.png`
-- `output/plots/activation_vs_expression_mean_sem.csv`
+- `output/plots/treatment_vs_vehicle_1x4.png`
+- `output/plots/treatment_vs_vehicle_mean_sem.csv`
 
 ## Three Subgroups in 1x4 Layout
 
@@ -99,9 +105,9 @@ python scripts/plot_three_subgroups_1x4.py
 ```
 
 Creates a single `1x4` figure (DREADD, PSAM, LMO7, EYFP) with:
-- Group I (Activation)
-- Group II (Expression only)
-- Group III (Effector only)
+- Group I (Treatment condition)
+- Group II (Vehicle condition)
+- Group III (Ligand/media-only control)
 
 Outputs:
 - `output/plots/three_subgroups_1x4.png`

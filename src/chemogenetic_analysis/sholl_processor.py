@@ -10,6 +10,9 @@ class ShollDataProcessor:
     """Load and tidy wide-format Sholl analysis CSV files."""
 
     DISTANCE_COLUMN = "Distance from Soma (µm)"
+    GROUP_I_TREATMENT = "Group I (Treatment condition)"
+    GROUP_II_VEHICLE = "Group II (Vehicle condition)"
+    GROUP_III_LIGAND_MEDIA_CONTROL = "Group III (Ligand/media-only control)"
     DEFAULT_CONDITION_MAP = {
         "DREADD/CNO": "DREADD_CNO",
         "PSAM/uPSEM": "PSAM_uPSEM",
@@ -25,50 +28,50 @@ class ShollDataProcessor:
         "MEDIA": "None_Vehicle",
     }
     GROUP_BY_CONDITION = {
-        "DREADD_CNO": "Group I (Activation)",
-        "PSAM_uPSEM": "Group I (Activation)",
-        "LMO7_hCTZ": "Group I (Activation)",
-        "DREADD_Vehicle": "Group II (Expression only)",
-        "PSAM_Vehicle": "Group II (Expression only)",
-        "LMO7_Vehicle": "Group II (Expression only)",
-        "EYFP_Control": "Group II (Expression only)",
-        "EYFP_Control_Media": "Group I (Activation)",
-        "None_CNO": "Group III (Effector only)",
-        "None_uPSEM": "Group III (Effector only)",
-        "None_hCTZ": "Group III (Effector only)",
-        "None_Vehicle": "Group III (Effector only)",
+        "DREADD_CNO": GROUP_I_TREATMENT,
+        "PSAM_uPSEM": GROUP_I_TREATMENT,
+        "LMO7_hCTZ": GROUP_I_TREATMENT,
+        "DREADD_Vehicle": GROUP_II_VEHICLE,
+        "PSAM_Vehicle": GROUP_II_VEHICLE,
+        "LMO7_Vehicle": GROUP_II_VEHICLE,
+        "EYFP_Control": GROUP_II_VEHICLE,
+        "EYFP_Control_Media": GROUP_I_TREATMENT,
+        "None_CNO": GROUP_III_LIGAND_MEDIA_CONTROL,
+        "None_uPSEM": GROUP_III_LIGAND_MEDIA_CONTROL,
+        "None_hCTZ": GROUP_III_LIGAND_MEDIA_CONTROL,
+        "None_Vehicle": GROUP_III_LIGAND_MEDIA_CONTROL,
     }
     TECHNOLOGY_CONDITIONS = {
         "DREADD": {
-            "Group I (Activation)": "DREADD_CNO",
-            "Group II (Expression only)": "DREADD_Vehicle",
-            "Group III (Effector only)": "None_CNO",
+            GROUP_I_TREATMENT: "DREADD_CNO",
+            GROUP_II_VEHICLE: "DREADD_Vehicle",
+            GROUP_III_LIGAND_MEDIA_CONTROL: "None_CNO",
         },
         "PSAM": {
-            "Group I (Activation)": "PSAM_uPSEM",
-            "Group II (Expression only)": "PSAM_Vehicle",
-            "Group III (Effector only)": "None_uPSEM",
+            GROUP_I_TREATMENT: "PSAM_uPSEM",
+            GROUP_II_VEHICLE: "PSAM_Vehicle",
+            GROUP_III_LIGAND_MEDIA_CONTROL: "None_uPSEM",
         },
         "LMO7": {
-            "Group I (Activation)": "LMO7_hCTZ",
-            "Group II (Expression only)": "LMO7_Vehicle",
-            "Group III (Effector only)": "None_hCTZ",
+            GROUP_I_TREATMENT: "LMO7_hCTZ",
+            GROUP_II_VEHICLE: "LMO7_Vehicle",
+            GROUP_III_LIGAND_MEDIA_CONTROL: "None_hCTZ",
         },
         "EYFP": {
-            "Group I (Activation)": "EYFP_Control_Media",
-            "Group II (Expression only)": "EYFP_Control",
-            "Group III (Effector only)": "None_Vehicle",
+            GROUP_I_TREATMENT: "EYFP_Control_Media",
+            GROUP_II_VEHICLE: "EYFP_Control",
+            GROUP_III_LIGAND_MEDIA_CONTROL: "None_Vehicle",
         },
     }
     GROUP_COLORS = {
-        "Group I (Activation)": "#d1495b",
-        "Group II (Expression only)": "#2e86ab",
-        "Group III (Effector only)": "#3caea3",
+        GROUP_I_TREATMENT: "#d1495b",
+        GROUP_II_VEHICLE: "#2e86ab",
+        GROUP_III_LIGAND_MEDIA_CONTROL: "#3caea3",
     }
     GROUP_ORDER = [
-        "Group I (Activation)",
-        "Group II (Expression only)",
-        "Group III (Effector only)",
+        GROUP_I_TREATMENT,
+        GROUP_II_VEHICLE,
+        GROUP_III_LIGAND_MEDIA_CONTROL,
     ]
 
     def __init__(self, csv_path: str | Path):
@@ -183,9 +186,9 @@ class ShollDataProcessor:
             shared_df = recoded_df.loc[recoded_df["condition"] == "EYFP_Vehicle"].copy()
             non_shared_df = recoded_df.loc[recoded_df["condition"] != "EYFP_Vehicle"]
             shared_g1 = shared_df.copy()
-            shared_g1["analysis_group"] = "Group I (Activation)"
+            shared_g1["analysis_group"] = self.GROUP_I_TREATMENT
             shared_g2 = shared_df.copy()
-            shared_g2["analysis_group"] = "Group II (Expression only)"
+            shared_g2["analysis_group"] = self.GROUP_II_VEHICLE
             recoded_df = pd.concat([non_shared_df, shared_g1, shared_g2], ignore_index=True)
 
         recoded_df = recoded_df[
@@ -497,7 +500,7 @@ class ShollDataProcessor:
 
         Mean values are plotted as dots and SEM is shown as vertical error bars.
         A small x-offset is applied per group so overlapping traces (for example,
-        EYFP Activation vs Expression) remain visible.
+        EYFP treatment and vehicle conditions) remain visible.
         """
         if summary_df is None:
             summary_df = self.summarize_mean_sem_by_technology(
@@ -510,9 +513,9 @@ class ShollDataProcessor:
         output_path.mkdir(parents=True, exist_ok=True)
         plot_paths: list[Path] = []
         group_offsets = {
-            "Group I (Activation)": -1.0,
-            "Group II (Expression only)": 0.0,
-            "Group III (Effector only)": 1.0,
+            self.GROUP_I_TREATMENT: -1.0,
+            self.GROUP_II_VEHICLE: 0.0,
+            self.GROUP_III_LIGAND_MEDIA_CONTROL: 1.0,
         }
 
         for technology, group_map in self.TECHNOLOGY_CONDITIONS.items():

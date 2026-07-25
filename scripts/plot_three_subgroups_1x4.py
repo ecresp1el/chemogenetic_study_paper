@@ -16,19 +16,19 @@ from chemogenetic_analysis import ShollDataProcessor
 
 TECH_ORDER = ["DREADD", "PSAM", "LMO7", "EYFP"]
 GROUPS = [
-    "Group I (Activation)",
-    "Group II (Expression only)",
-    "Group III (Effector only)",
+    ShollDataProcessor.GROUP_I_TREATMENT,
+    ShollDataProcessor.GROUP_II_VEHICLE,
+    ShollDataProcessor.GROUP_III_LIGAND_MEDIA_CONTROL,
 ]
 GROUP_MARKERS = {
-    "Group I (Activation)": "o",
-    "Group II (Expression only)": "s",
-    "Group III (Effector only)": "^",
+    ShollDataProcessor.GROUP_I_TREATMENT: "o",
+    ShollDataProcessor.GROUP_II_VEHICLE: "s",
+    ShollDataProcessor.GROUP_III_LIGAND_MEDIA_CONTROL: "^",
 }
 GROUP_SHORT = {
-    "Group I (Activation)": "A",
-    "Group II (Expression only)": "E",
-    "Group III (Effector only)": "F",
+    ShollDataProcessor.GROUP_I_TREATMENT: "T",
+    ShollDataProcessor.GROUP_II_VEHICLE: "V",
+    ShollDataProcessor.GROUP_III_LIGAND_MEDIA_CONTROL: "C",
 }
 
 
@@ -80,9 +80,9 @@ def main() -> None:
 
     fig, axes = plt.subplots(1, 4, figsize=(23, 5.5), sharey=True)
     group_offsets = {
-        "Group I (Activation)": -1.0,
-        "Group II (Expression only)": 0.0,
-        "Group III (Effector only)": 1.0,
+        ShollDataProcessor.GROUP_I_TREATMENT: -1.0,
+        ShollDataProcessor.GROUP_II_VEHICLE: 0.0,
+        ShollDataProcessor.GROUP_III_LIGAND_MEDIA_CONTROL: 1.0,
     }
 
     for idx, technology in enumerate(TECH_ORDER):

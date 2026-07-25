@@ -18,7 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Generate per-technology mean/SEM plots with mean as dots and "
-            "SEM as error bars for Activation, Expression, and Effector groups."
+            "SEM as error bars for treatment, vehicle, and ligand/media-only control groups."
         )
     )
     parser.add_argument(
