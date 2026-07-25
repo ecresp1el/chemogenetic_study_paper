@@ -42,6 +42,16 @@ that the EYFP vector control is chemogenetically activated:
 - Group II (Vehicle condition): actuator-vector or EYFP-vector without the Group-I treatment
 - Group III (Ligand/media-only control): ligand-only or media-only control without an actuator vector
 
+Color policy is locked across every figure:
+- hM3Dq/DREADD + CNO: green (`#6AA84F`)
+- LMO7 + hCTZ: cyan (`#46B3C3`)
+- PSAM4-5HT3 + uPSEM: purple (`#8E7CC3`)
+- all control conditions (vehicle, EYFP, ligand-only, and media-only): gray (`#9AA0A6`)
+
+The group-comparison figures use a separate palette and never reuse those
+technology colors: Group I treatment is gold (`#C9A227`), while Groups II and
+III are gray and are distinguished by marker shape.
+
 ## Plot Mean +/- SEM By Technology
 
 ```bash

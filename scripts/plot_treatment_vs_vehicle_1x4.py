@@ -95,7 +95,7 @@ def main() -> None:
             if line_df.empty:
                 continue
 
-            color = processor.GROUP_COLORS.get(group_name, "#4c4c4c")
+            color = processor.color_for_group_comparison(group_name)
             x = line_df["radius_um"] + group_offsets.get(group_name, 0.0)
             y = line_df["mean_intersections"]
             sem = line_df["sem_intersections"]
@@ -136,7 +136,7 @@ def main() -> None:
             [0],
             [0],
             marker=GROUP_MARKERS.get(group, "o"),
-            color=processor.GROUP_COLORS.get(group, "#4c4c4c"),
+            color=processor.color_for_group_comparison(group),
             linestyle="None",
             markersize=6,
             label=group,

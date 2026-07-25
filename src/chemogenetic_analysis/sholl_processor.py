@@ -13,6 +13,17 @@ class ShollDataProcessor:
     GROUP_I_TREATMENT = "Group I (Treatment condition)"
     GROUP_II_VEHICLE = "Group II (Vehicle condition)"
     GROUP_III_LIGAND_MEDIA_CONTROL = "Group III (Ligand/media-only control)"
+    CONTROL_COLOR = "#9AA0A6"
+    CHEMOGENETIC_TOOL_COLORS = {
+        "DREADD_CNO": "#6AA84F",  # hM3Dq green
+        "LMO7_hCTZ": "#46B3C3",  # LMO7 cyan
+        "PSAM_uPSEM": "#8E7CC3",  # PSAM4-5HT3 purple
+    }
+    GROUP_COMPARISON_COLORS = {
+        GROUP_I_TREATMENT: "#C9A227",  # treatment gold; distinct from tool colors
+        GROUP_II_VEHICLE: CONTROL_COLOR,
+        GROUP_III_LIGAND_MEDIA_CONTROL: CONTROL_COLOR,
+    }
     DEFAULT_CONDITION_MAP = {
         "DREADD/CNO": "DREADD_CNO",
         "PSAM/uPSEM": "PSAM_uPSEM",
@@ -63,11 +74,6 @@ class ShollDataProcessor:
             GROUP_III_LIGAND_MEDIA_CONTROL: "None_Vehicle",
         },
     }
-    GROUP_COLORS = {
-        GROUP_I_TREATMENT: "#d1495b",
-        GROUP_II_VEHICLE: "#2e86ab",
-        GROUP_III_LIGAND_MEDIA_CONTROL: "#3caea3",
-    }
     GROUP_ORDER = [
         GROUP_I_TREATMENT,
         GROUP_II_VEHICLE,
@@ -77,6 +83,25 @@ class ShollDataProcessor:
     def __init__(self, csv_path: str | Path):
         self.csv_path = Path(csv_path)
         self._raw_df: pd.DataFrame | None = None
+
+    @classmethod
+    def color_for_condition(cls, condition: str) -> str:
+        """Return the locked display color for a study condition.
+
+        Only the active chemogenetic-tool conditions receive tool-specific colors.
+        Vehicle, EYFP, ligand/media-only, and all other control conditions are dark gray.
+        """
+        return cls.CHEMOGENETIC_TOOL_COLORS.get(condition, cls.CONTROL_COLOR)
+
+    @classmethod
+    def color_for_group_comparison(cls, analysis_group: str) -> str:
+        """Return the locked treatment-versus-control color for group plots.
+
+        This palette is intentionally separate from the per-technology palette:
+        treatment is gold, while both control groups are gray and differentiated
+        by marker shape.
+        """
+        return cls.GROUP_COMPARISON_COLORS.get(analysis_group, cls.CONTROL_COLOR)
 
     def load_csv(self) -> pd.DataFrame:
         """Load CSV from disk and return a copy of the raw dataframe."""
@@ -535,7 +560,7 @@ class ShollDataProcessor:
                 x = line_df["radius_um"] + group_offsets.get(group_name, 0.0)
                 y = line_df["mean_intersections"]
                 sem = line_df["sem_intersections"]
-                color = self.GROUP_COLORS.get(group_name, "#4c4c4c")
+                color = self.color_for_condition(condition_name)
                 label = f"{group_name}: {condition_name}"
 
                 ax.errorbar(
@@ -606,7 +631,8 @@ class ShollDataProcessor:
                 )
                 if group_df.empty:
                     continue
-                color = self.GROUP_COLORS.get(group_name, "#4c4c4c")
+                condition_name = self.TECHNOLOGY_CONDITIONS[technology][group_name]
+                color = self.color_for_condition(condition_name)
                 ax_cov.plot(
                     group_df["radius_um"],
                     group_df["pct_cells_observed"] * 100.0,
