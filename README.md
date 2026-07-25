@@ -245,6 +245,20 @@ python scripts/run_major_group_kruskal_dunn.py
 
 Runs a nonparametric companion analysis within each major group: one Kruskal-Wallis test,
 then Dunn contrasts of the three actuator conditions against the group’s shared control.
+
+### AUC figure with Dunn comparison brackets
+
+```bash
+python scripts/plot_auc_major_group_statistics.py
+```
+
+Creates three tracked variants: raw AUC, fold change normalized to the matched-control
+mean, and fold change normalized to the matched-control median. Their figures are
+`auc_major_groups_kruskal_dunn_raw.png`,
+`auc_major_groups_kruskal_dunn_mean_normalized.png`, and
+`auc_major_groups_kruskal_dunn_median_normalized.png`. Corresponding raw, mean-, and
+median-normalized input tables and Kruskal-Wallis/Dunn result tables are retained in
+`output/stats/major_group_kruskal_dunn/`, along with `normalization_references.csv`.
 Holm-adjusted p-values are primary; Bonferroni-adjusted values are also included.
 
 ## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)

@@ -1,0 +1,4 @@
+major_group,control_condition,control_n,control_mean_raw_auc,control_median_raw_auc
+Group I: treatment condition,EYFP_Control_Media,11,1299.7727272727273,1312.5
+Group II: vehicle condition,EYFP_Control,12,2086.25,1761.25
+Group III: ligand/media-only control,None_Vehicle,11,2391.818181818182,2237.5
