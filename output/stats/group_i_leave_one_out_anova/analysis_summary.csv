@@ -1,0 +1,2 @@
+analysis,conditions,n_cells_full_data,anova_f_statistic_full_data,anova_pvalue_full_data,alpha,n_single_cell_removals_with_significant_anova
+Group I one-way ANOVA leave-one-cell-out sensitivity,DREADD_CNO | LMO7_hCTZ | PSAM_uPSEM | EYFP_Control_Media,44,1.4138380900598677,0.25286867067278923,0.05,0

@@ -50,7 +50,13 @@ def main() -> None:
     median_kruskal_frames: list[pd.DataFrame] = []
     median_dunn_frames: list[pd.DataFrame] = []
     median_auc_frames: list[pd.DataFrame] = []
+    pooled_eyfp_kruskal_frames: list[pd.DataFrame] = []
+    pooled_eyfp_dunn_frames: list[pd.DataFrame] = []
+    pooled_eyfp_auc_frames: list[pd.DataFrame] = []
     references: list[dict[str, str | float | int]] = []
+    pooled_eyfp_mean = auc_df.loc[
+        auc_df["condition"].isin(["EYFP_Control", "EYFP_Control_Media"]), "auc"
+    ].mean()
     for comparison in COMPARISONS:
         raw_kruskal_df, raw_dunn_df = analyzer.run_kruskal_dunn(
             auc_df, control_condition=comparison.control, treatment_conditions=comparison.treatments
@@ -70,11 +76,20 @@ def main() -> None:
             "control_n": len(control_values),
             "control_mean_raw_auc": control_mean,
             "control_median_raw_auc": control_median,
+            "pooled_eyfp_control_mean_raw_auc": pooled_eyfp_mean,
         })
+
+        pooled_reference = pooled_eyfp_mean if comparison.control.startswith("EYFP_") else control_mean
+        pooled_reference_name = (
+            "pooled_EYFP_control_and_EYFP_media_mean"
+            if comparison.control.startswith("EYFP_")
+            else "matched_media_only_mean"
+        )
 
         for reference_name, reference_value, output_frames in (
             ("matched_control_mean", control_mean, (mean_auc_frames, mean_kruskal_frames, mean_dunn_frames)),
             ("matched_control_median", control_median, (median_auc_frames, median_kruskal_frames, median_dunn_frames)),
+            (pooled_reference_name, pooled_reference, (pooled_eyfp_auc_frames, pooled_eyfp_kruskal_frames, pooled_eyfp_dunn_frames)),
         ):
             normalized_auc = group_auc.copy()
             normalized_auc["auc"] = normalized_auc["auc"] / reference_value
@@ -100,10 +115,13 @@ def main() -> None:
     mean_dunn_results = pd.concat(mean_dunn_frames, ignore_index=True)
     median_kruskal_results = pd.concat(median_kruskal_frames, ignore_index=True)
     median_dunn_results = pd.concat(median_dunn_frames, ignore_index=True)
+    pooled_eyfp_kruskal_results = pd.concat(pooled_eyfp_kruskal_frames, ignore_index=True)
+    pooled_eyfp_dunn_results = pd.concat(pooled_eyfp_dunn_frames, ignore_index=True)
     auc_df.to_csv(output_dir / "auc_per_cell.csv", index=False)
     pd.DataFrame(references).to_csv(output_dir / "normalization_references.csv", index=False)
     pd.concat(mean_auc_frames, ignore_index=True).to_csv(output_dir / "mean_normalized_auc_per_cell.csv", index=False)
     pd.concat(median_auc_frames, ignore_index=True).to_csv(output_dir / "median_normalized_auc_per_cell.csv", index=False)
+    pd.concat(pooled_eyfp_auc_frames, ignore_index=True).to_csv(output_dir / "pooled_eyfp_normalized_auc_per_cell.csv", index=False)
     # Backward-compatible filename: "normalized" formerly meant mean-normalized.
     pd.concat(mean_auc_frames, ignore_index=True).to_csv(output_dir / "normalized_auc_per_cell.csv", index=False)
     raw_kruskal_results.to_csv(output_dir / "kruskal_wallis_raw_auc_by_major_group.csv", index=False)
@@ -112,6 +130,8 @@ def main() -> None:
     mean_dunn_results.to_csv(output_dir / "dunn_mean_normalized_auc_shared_control_contrasts_by_major_group.csv", index=False)
     median_kruskal_results.to_csv(output_dir / "kruskal_wallis_median_normalized_auc_by_major_group.csv", index=False)
     median_dunn_results.to_csv(output_dir / "dunn_median_normalized_auc_shared_control_contrasts_by_major_group.csv", index=False)
+    pooled_eyfp_kruskal_results.to_csv(output_dir / "kruskal_wallis_pooled_eyfp_normalized_auc_by_major_group.csv", index=False)
+    pooled_eyfp_dunn_results.to_csv(output_dir / "dunn_pooled_eyfp_normalized_auc_shared_control_contrasts_by_major_group.csv", index=False)
     # Backward-compatible mean-normalized filenames.
     mean_kruskal_results.to_csv(output_dir / "kruskal_wallis_normalized_auc_by_major_group.csv", index=False)
     mean_dunn_results.to_csv(output_dir / "dunn_normalized_auc_shared_control_contrasts_by_major_group.csv", index=False)
@@ -124,6 +144,8 @@ def main() -> None:
     print(mean_kruskal_results.to_string(index=False))
     print("\nMedian-normalized AUC Kruskal-Wallis results:")
     print(median_kruskal_results.to_string(index=False))
+    print("\nPooled-EYFP-normalized AUC Kruskal-Wallis results:")
+    print(pooled_eyfp_kruskal_results.to_string(index=False))
     print("\nDunn contrasts (Holm primary; Bonferroni also reported):")
     print(raw_dunn_results.to_string(index=False))
 

@@ -252,13 +252,60 @@ then Dunn contrasts of the three actuator conditions against the group’s share
 python scripts/plot_auc_major_group_statistics.py
 ```
 
-Creates three tracked variants: raw AUC, fold change normalized to the matched-control
-mean, and fold change normalized to the matched-control median. Their figures are
+Creates four tracked variants: raw AUC, fold change normalized to the matched-control
+mean, fold change normalized to the matched-control median, and a pooled-EYFP mean
+normalization (Groups I/II pool `EYFP control` and `EYFP + media`; Group III retains
+its media-only mean). Their figures are
 `auc_major_groups_kruskal_dunn_raw.png`,
 `auc_major_groups_kruskal_dunn_mean_normalized.png`, and
-`auc_major_groups_kruskal_dunn_median_normalized.png`. Corresponding raw, mean-, and
-median-normalized input tables and Kruskal-Wallis/Dunn result tables are retained in
+`auc_major_groups_kruskal_dunn_median_normalized.png`, and
+`auc_major_groups_kruskal_dunn_pooled_eyfp_normalized.png`. Corresponding raw,
+mean-, median-, and pooled-EYFP-normalized input tables and Kruskal-Wallis/Dunn
+result tables are retained in
 `output/stats/major_group_kruskal_dunn/`, along with `normalization_references.csv`.
+
+### Pooled-EYFP-control inferential analysis
+
+```bash
+python scripts/run_pooled_eyfp_control_kruskal_dunn.py
+python scripts/plot_auc_pooled_eyfp_control_statistics.py
+```
+
+This is distinct from pooled-mean normalization: it combines `EYFP control` and
+`EYFP + media` cells into one 23-cell control distribution, then compares each Group I
+or Group II treatment directly against that pooled distribution with Dunn–Holm tests.
+
+### One-sample tests of normalized actuator conditions
+
+```bash
+python scripts/run_normalized_actuator_one_sample_tests.py
+```
+
+Runs two-sided Wilcoxon signed-rank tests of every Group I/II actuator-vector
+condition against fold change = 1 for matched-control mean, matched-control median,
+and pooled-EYFP mean normalization. Holm adjustment is applied across the six actuator
+conditions separately within each normalization framework.
+
+### Group I leave-one-cell-out ANOVA sensitivity analysis
+
+```bash
+python scripts/run_group_i_leave_one_out_anova.py
+```
+
+Re-runs the four-condition Group I one-way ANOVA after removing one cell at a time,
+then ranks cells by the resulting omnibus ANOVA p-value. This is a sensitivity analysis
+only; it does not remove or label any cell as an outlier.
+
+### Group I multi-cell-removal ANOVA sensitivity screen
+
+```bash
+python scripts/run_group_i_multi_cell_removal_anova.py
+```
+
+Tests every two-cell removal and seeded random combinations of 3–8 removals, then ranks
+combinations by the resulting one-way ANOVA p-value and summarizes cell recurrence among
+significant combinations. This is exploratory robustness screening, not a basis for
+post-hoc exclusion.
 Holm-adjusted p-values are primary; Bonferroni-adjusted values are also included.
 
 ## Fast Fix Reanalysis (Metadata -> AUC -> QC -> Models -> Delta Check)

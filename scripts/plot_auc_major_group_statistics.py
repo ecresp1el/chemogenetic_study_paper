@@ -140,6 +140,8 @@ def _plot_panel(
     axis.set_yticks(positions, labels)
     axis.invert_yaxis()
     axis.set_xlim(0, x_data_max * 1.31)
+    if metric_column != "auc":
+        axis.axvline(1.0, color="#666666", linestyle="--", linewidth=0.75, zorder=0)
     axis.set_xlabel(x_label)
     axis.set_title(panel.title, fontsize=10, fontweight="bold", pad=9)
     axis.spines[["top", "right"]].set_visible(False)
@@ -195,9 +197,16 @@ def _render_figure(
 def main() -> None:
     grouped_df = ShollDataProcessor(REPO_ROOT / "input_data" / "Sholl_Analysis_unsorted.csv").recode_conditions(split_shared_control=True)
     metrics = [_report_metrics(grouped_df, panel) for panel in PANELS]
+    pooled_eyfp_mean = pd.concat(metrics, ignore_index=True).loc[
+        lambda frame: frame["condition"].isin(["EYFP_Control", "EYFP_Control_Media"]), "auc"
+    ].mean()
     for panel, frame in zip(PANELS, metrics):
         control_median = frame.loc[frame["condition"] == panel.control, "auc"].median()
         frame["fold_change_vs_median_reference"] = frame["auc"] / control_median
+        pooled_reference = pooled_eyfp_mean if panel.control.startswith("EYFP_") else frame.loc[
+            frame["condition"] == panel.control, "auc"
+        ].mean()
+        frame["fold_change_vs_pooled_eyfp_reference"] = frame["auc"] / pooled_reference
     _render_figure(
         metrics,
         pd.read_csv(STATS_DIR / "kruskal_wallis_raw_auc_by_major_group.csv"),
@@ -224,6 +233,15 @@ def main() -> None:
         "Fold change (AUC / matched-control median)",
         "Median-Normalized Sholl AUC: Planned Comparisons Within Major Study Groups",
         REPO_ROOT / "output" / "plots" / "auc_major_groups_kruskal_dunn_median_normalized.png",
+    )
+    _render_figure(
+        metrics,
+        pd.read_csv(STATS_DIR / "kruskal_wallis_pooled_eyfp_normalized_auc_by_major_group.csv"),
+        pd.read_csv(STATS_DIR / "dunn_pooled_eyfp_normalized_auc_shared_control_contrasts_by_major_group.csv"),
+        "fold_change_vs_pooled_eyfp_reference",
+        "Fold change (Groups I/II: pooled EYFP mean; Group III: media mean)",
+        "Pooled-EYFP-Normalized Sholl AUC: Planned Comparisons Within Major Study Groups",
+        REPO_ROOT / "output" / "plots" / "auc_major_groups_kruskal_dunn_pooled_eyfp_normalized.png",
     )
 
 

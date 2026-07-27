@@ -1,0 +1,3 @@
+major_group,control_condition,treatment_conditions,n_total_cells,kruskal_wallis_h_statistic,kruskal_wallis_pvalue,tie_correction
+Group I: treatment condition vs pooled EYFP,Pooled_EYFP_Control,DREADD_CNO | LMO7_hCTZ | PSAM_uPSEM,56,7.1026182455441615,0.06869791693595577,0.9999658236500342
+Group II: vehicle condition vs pooled EYFP,Pooled_EYFP_Control,DREADD_Vehicle | LMO7_Vehicle | PSAM_Vehicle,53,5.334189126586989,0.14889923148562662,0.9999193678438961

@@ -1,0 +1,2 @@
+n_group_i_cells,exhaustive_pair_combinations,random_draws_per_removal_size,random_removal_sizes,seed,alpha,n_combinations_tested,n_significant_combinations,n_significant_after_holm_all_removal_sets,minimum_anova_pvalue,minimum_holm_adjusted_anova_pvalue
+44,946,3000,3 through 8,20260725,0.05,18946,406,0,0.0007309221369693891,1.0

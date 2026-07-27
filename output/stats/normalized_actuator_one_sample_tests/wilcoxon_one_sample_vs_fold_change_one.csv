@@ -1,0 +1,19 @@
+normalization,normalization_definition,major_group,condition,reference_value,normalization_denominator_raw_auc,n_cells,fold_change_mean,fold_change_median,wilcoxon_w_statistic,wilcoxon_pvalue_unadjusted,wilcoxon_pvalue_holm_adjusted
+matched_control_mean,AUC / own matched-control mean,Group I: treatment condition,DREADD_CNO,1.0,1299.7727272727273,12,1.158856443434167,1.103077461094597,17.0,0.09228515625,0.369140625
+matched_control_mean,AUC / own matched-control mean,Group I: treatment condition,LMO7_hCTZ,1.0,1299.7727272727273,9,1.0441996464028287,1.0867284490295506,13.0,0.2890625,0.578125
+matched_control_mean,AUC / own matched-control mean,Group I: treatment condition,PSAM_uPSEM,1.0,1299.7727272727273,12,0.9089730139301745,0.761671620912747,25.0,0.30126953125,0.578125
+matched_control_mean,AUC / own matched-control mean,Group II: vehicle condition,DREADD_Vehicle,1.0,2086.25,9,0.8059383529725053,0.805272618334332,4.0,0.02734375,0.13671875
+matched_control_mean,AUC / own matched-control mean,Group II: vehicle condition,LMO7_Vehicle,1.0,2086.25,11,0.8451440710278337,0.793289394847214,15.0,0.123046875,0.369140625
+matched_control_mean,AUC / own matched-control mean,Group II: vehicle condition,PSAM_Vehicle,1.0,2086.25,10,0.6272019173157579,0.6608747753145596,0.0,0.001953125,0.01171875
+matched_control_median,AUC / own matched-control median,Group I: treatment condition,DREADD_CNO,1.0,1312.5,12,1.1476190476190475,1.0923809523809522,19.0,0.12939453125,0.64697265625
+matched_control_median,AUC / own matched-control median,Group I: treatment condition,LMO7_hCTZ,1.0,1312.5,9,1.0340740740740741,1.0761904761904761,13.0,0.2890625,1.0
+matched_control_median,AUC / own matched-control median,Group I: treatment condition,PSAM_uPSEM,1.0,1312.5,12,0.9001587301587303,0.7542857142857142,25.0,0.30126953125,1.0
+matched_control_median,AUC / own matched-control median,Group II: vehicle condition,DREADD_Vehicle,1.0,1761.25,9,0.954656572825487,0.9538679914833215,16.0,0.49609375,1.0
+matched_control_median,AUC / own matched-control median,Group II: vehicle condition,LMO7_Vehicle,1.0,1761.25,11,1.0010968449577393,0.9396735273243435,32.0,0.9658203125,1.0
+matched_control_median,AUC / own matched-control median,Group II: vehicle condition,PSAM_Vehicle,1.0,1761.25,10,0.7429382540809084,0.7828246983676366,2.0,0.005859375,0.03515625
+pooled_EYFP_mean,AUC / pooled EYFP mean,Group I: treatment condition,DREADD_CNO,1.0,1710.108695652174,12,0.8807919659314815,0.8383969999364393,18.0,0.10986328125,0.32958984375
+pooled_EYFP_mean,AUC / pooled EYFP mean,Group I: treatment condition,LMO7_hCTZ,1.0,1710.108695652174,9,0.7936467580527835,0.8259708892137545,0.0,0.00390625,0.0205078125
+pooled_EYFP_mean,AUC / pooled EYFP mean,Group I: treatment condition,PSAM_uPSEM,1.0,1710.108695652174,12,0.6908673912582893,0.5789105701391979,4.0,0.00341796875,0.0205078125
+pooled_EYFP_mean,AUC / pooled EYFP mean,Group II: vehicle condition,DREADD_Vehicle,1.0,1710.108695652174,9,0.9832058588811908,0.982393694781669,18.0,0.65234375,1.0
+pooled_EYFP_mean,AUC / pooled EYFP mean,Group II: vehicle condition,LMO7_Vehicle,1.0,1710.108695652174,11,1.0310349410330342,0.9677747409902752,32.0,0.9658203125,1.0
+pooled_EYFP_mean,AUC / pooled EYFP mean,Group II: vehicle condition,PSAM_Vehicle,1.0,1710.108695652174,10,0.765156041441556,0.8062353015953727,7.0,0.037109375,0.1484375
